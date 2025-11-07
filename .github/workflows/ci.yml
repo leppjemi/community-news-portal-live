@@ -96,6 +96,10 @@ jobs:
           extensions: mbstring, pdo_mysql, zip, exif, gd, opcache
           tools: composer
 
+      - name: Clear Composer cache
+        working-directory: src
+        run: composer clear-cache || true
+
       - name: Install Composer dependencies
         working-directory: src
         run: composer install --prefer-dist --no-progress --no-interaction
