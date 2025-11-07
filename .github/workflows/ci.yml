@@ -124,8 +124,8 @@ jobs:
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./docker/php
+          file: ./docker/php/Dockerfile
           push: false
           tags: community-news-portal:latest
           cache-from: type=gha
