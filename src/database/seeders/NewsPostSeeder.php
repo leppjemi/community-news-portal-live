@@ -17,7 +17,7 @@ class NewsPostSeeder extends Seeder
     {
         // Get first user and all categories
         $user = User::first();
-        if (! $user) {
+        if (!$user) {
             $this->command->error('No users found. Please run UserSeeder first.');
 
             return;
@@ -49,7 +49,7 @@ class NewsPostSeeder extends Seeder
                 $slug = $baseSlug;
                 $counter = 1;
                 while (NewsPost::where('slug', $slug)->exists()) {
-                    $slug = $baseSlug . '-' . $counter;
+                    $slug = $baseSlug.'-'.$counter;
                     $counter++;
                 }
 
@@ -72,7 +72,7 @@ class NewsPostSeeder extends Seeder
                 $created++;
                 $this->command->info("Created article: {$article['title']}");
             } catch (\Exception $e) {
-                $this->command->error("Failed to create article '{$article['title']}': " . $e->getMessage());
+                $this->command->error("Failed to create article '{$article['title']}': ".$e->getMessage());
             }
         }
 
@@ -84,7 +84,7 @@ class NewsPostSeeder extends Seeder
      */
     private function determineCategory(string $title, string $content, $categories, array $categoryMap): Category
     {
-        $text = strtolower($title . ' ' . $content);
+        $text = strtolower($title.' '.$content);
 
         foreach ($categoryMap as $categoryName => $keywords) {
             foreach ($keywords as $keyword) {
@@ -106,7 +106,7 @@ class NewsPostSeeder extends Seeder
      */
     private function getImageUrl(string $title, string $content): string
     {
-        $text = strtolower($title . ' ' . $content);
+        $text = strtolower($title.' '.$content);
 
         // Map keywords to search terms for Unsplash
         $keywordMap = [
