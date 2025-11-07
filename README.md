@@ -21,6 +21,10 @@ You'll need a few things installed before we get started:
   - [macOS](https://www.docker.com/products/docker-desktop/)
   - [Linux](https://docs.docker.com/engine/install/)
 - **Git** (you probably already have this)
+- **Make** (for running the setup commands)
+  - **Windows**: Install via WSL, Git Bash (comes with Git), or [Chocolatey](https://chocolatey.org/) (`choco install make`)
+  - **macOS**: Usually pre-installed, or install via Homebrew (`brew install make`)
+  - **Linux**: Install via package manager (`sudo apt install make` for Ubuntu/Debian)
 
 Docker Compose comes bundled with Docker Desktop, so you don't need to install it separately.
 
@@ -125,6 +129,110 @@ Here's how an article makes it to the homepage:
 4. People can then like it, share it, and engage with it
 
 Pretty simple, right?
+
+---
+
+## ⚠️ Don't Have `make` Installed?
+
+If you don't have `make` installed, you have a few options:
+
+### Option 1: Install `make` (Recommended)
+
+**Windows:**
+- **WSL**: If you have WSL, run `sudo apt update && sudo apt install -y make`
+- **Git Bash**: If you have Git for Windows, `make` comes bundled with Git Bash
+- **Chocolatey**: Run `choco install make` in PowerShell (as Administrator)
+- **Manual**: Download from [GnuWin32](http://gnuwin32.sourceforge.net/packages/make.htm)
+
+**macOS:**
+- Usually pre-installed. If not: `brew install make`
+
+**Linux:**
+- Ubuntu/Debian: `sudo apt install make`
+- Fedora/RHEL: `sudo dnf install make`
+- Arch: `sudo pacman -S make`
+
+### Option 2: Run Commands Directly (No `make` Required)
+
+If you prefer not to install `make`, you can run the Docker Compose commands directly. Replace `make setup-all` with these commands:
+
+```bash
+# Set project name variable
+PROJECT_NAME=community-news-portal
+
+# Step 1: Build and start containers
+docker compose -p $PROJECT_NAME -f docker-compose.yml build
+docker compose -p $PROJECT_NAME -f docker-compose.yml up -d
+
+# Step 2: Wait for database (wait a few seconds)
+sleep 10
+
+# Step 3: Setup .env file (if it doesn't exist)
+if [ ! -f src/.env ]; then
+  cp src/.env.example src/.env 2>/dev/null || touch src/.env
+fi
+
+# Step 4: Fix permissions
+docker compose -p $PROJECT_NAME exec app sh -c "mkdir -p storage/framework/{sessions,views,cache} storage/app/public storage/logs bootstrap/cache && chown -R www-data:www-data storage bootstrap/cache && chmod -R 775 storage bootstrap/cache"
+
+# Step 5: Install Composer dependencies
+docker compose -p $PROJECT_NAME exec app composer install
+
+# Step 6: Generate application key
+docker compose -p $PROJECT_NAME exec app php artisan key:generate
+
+# Step 7: Install NPM dependencies
+docker compose -p $PROJECT_NAME exec app npm install
+
+# Step 8: Build frontend assets
+docker compose -p $PROJECT_NAME exec app npm run build
+
+# Step 9: Run migrations and seed database
+docker compose -p $PROJECT_NAME exec app php artisan migrate
+docker compose -p $PROJECT_NAME exec app php artisan db:seed
+```
+
+**For Windows PowerShell/CMD**, use these commands instead:
+
+```powershell
+# Set project name
+$PROJECT_NAME = "community-news-portal"
+
+# Step 1: Build and start containers
+docker compose -p $PROJECT_NAME -f docker-compose.yml build
+docker compose -p $PROJECT_NAME -f docker-compose.yml up -d
+
+# Step 2: Wait for database
+Start-Sleep -Seconds 10
+
+# Step 3: Setup .env file
+if (-not (Test-Path "src\.env")) {
+    if (Test-Path "src\.env.example") {
+        Copy-Item "src\.env.example" "src\.env"
+    } else {
+        New-Item "src\.env" -ItemType File
+    }
+}
+
+# Step 4: Fix permissions
+docker compose -p $PROJECT_NAME exec app sh -c "mkdir -p storage/framework/{sessions,views,cache} storage/app/public storage/logs bootstrap/cache && chown -R www-data:www-data storage bootstrap/cache && chmod -R 775 storage bootstrap/cache"
+
+# Step 5: Install Composer dependencies
+docker compose -p $PROJECT_NAME exec app composer install
+
+# Step 6: Generate application key
+docker compose -p $PROJECT_NAME exec app php artisan key:generate
+
+# Step 7: Install NPM dependencies
+docker compose -p $PROJECT_NAME exec app npm install
+
+# Step 8: Build frontend assets
+docker compose -p $PROJECT_NAME exec app npm run build
+
+# Step 9: Run migrations and seed database
+docker compose -p $PROJECT_NAME exec app php artisan migrate
+docker compose -p $PROJECT_NAME exec app php artisan db:seed
+```
 
 ---
 
