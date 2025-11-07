@@ -115,10 +115,11 @@ RUN echo '[supervisord]' > /etc/supervisord.conf \
     && echo 'stdout_logfile_maxbytes=0' >> /etc/supervisord.conf \
     && echo '' >> /etc/supervisord.conf \
     && echo '[program:nginx]' >> /etc/supervisord.conf \
-    && echo 'command=nginx -g "daemon off;"' >> /etc/supervisord.conf \
+    && echo 'command=/bin/sh -c "echo \"Starting Nginx...\" && cat /etc/nginx/http.d/default.conf | head -5 && nginx -g \"daemon off;\""' >> /etc/supervisord.conf \
     && echo 'autostart=true' >> /etc/supervisord.conf \
     && echo 'autorestart=true' >> /etc/supervisord.conf \
     && echo 'priority=10' >> /etc/supervisord.conf \
+    && echo 'startsecs=2' >> /etc/supervisord.conf \
     && echo 'stderr_logfile=/dev/stderr' >> /etc/supervisord.conf \
     && echo 'stderr_logfile_maxbytes=0' >> /etc/supervisord.conf \
     && echo 'stdout_logfile=/dev/stdout' >> /etc/supervisord.conf \
@@ -126,7 +127,7 @@ RUN echo '[supervisord]' > /etc/supervisord.conf \
     && echo '' >> /etc/supervisord.conf \
     && echo '[program:verify-nginx]' >> /etc/supervisord.conf \
     && echo 'environment=PORT="%(ENV_PORT)s"' >> /etc/supervisord.conf \
-    && echo 'command=/bin/sh -c "sleep 5 && PORT=${PORT:-80} && echo \"=== Verifying Nginx ===\" && echo \"PORT: $PORT\" && echo \"Checking if Nginx is listening on port $PORT...\" && (netstat -tlnp 2>/dev/null | grep \":$PORT\" || ss -tlnp 2>/dev/null | grep \":$PORT\" || echo \"Port check: no match found\") && echo \"Testing health endpoint at http://127.0.0.1:$PORT/health...\" && curl -v -f http://127.0.0.1:$PORT/health 2>&1 && echo \"✓ Health endpoint is working!\" || (echo \"✗ Health endpoint failed\" && echo \"Checking Nginx config...\" && cat /etc/nginx/http.d/default.conf 2>/dev/null | head -30 || echo \"Config file not found\")"' >> /etc/supervisord.conf \
+    && echo 'command=/bin/sh -c "sleep 8 && PORT=${PORT:-80} && echo \"=== Verifying Nginx ===\" && echo \"PORT: $PORT\" && echo \"Checking Nginx process...\" && ps aux | grep nginx | grep -v grep || echo \"Nginx process not found\" && echo \"Checking if Nginx is listening on port $PORT...\" && (netstat -tlnp 2>/dev/null | grep \":$PORT\" || ss -tlnp 2>/dev/null | grep \":$PORT\" || echo \"Port check: no match found\") && echo \"Checking all listening ports...\" && (netstat -tlnp 2>/dev/null | grep LISTEN || ss -tlnp 2>/dev/null | grep LISTEN || echo \"Cannot list ports\") && echo \"Testing health endpoint at http://127.0.0.1:$PORT/health...\" && curl -v -f http://127.0.0.1:$PORT/health 2>&1 && echo \"✓ Health endpoint is working!\" || (echo \"✗ Health endpoint failed\" && echo \"Checking Nginx config...\" && cat /etc/nginx/http.d/default.conf 2>/dev/null | head -30 || echo \"Config file not found\" && echo \"Checking Nginx error log...\" && tail -20 /var/log/nginx/error.log 2>/dev/null || echo \"Error log not found\")"' >> /etc/supervisord.conf \
     && echo 'autostart=true' >> /etc/supervisord.conf \
     && echo 'autorestart=false' >> /etc/supervisord.conf \
     && echo 'priority=8' >> /etc/supervisord.conf \
@@ -210,10 +211,15 @@ RUN echo '#!/bin/sh' > /start.sh \
     && echo 'echo "- PHP-FPM will listen on 127.0.0.1:9000" >&2' >> /start.sh \
     && echo 'echo "- Health check available at http://0.0.0.0:$PORT/health" >&2' >> /start.sh \
     && echo 'echo "" >&2' >> /start.sh \
+    && echo 'echo "Final verification before starting supervisor:" >&2' >> /start.sh \
+    && echo 'echo "Config file exists: $(test -f /etc/nginx/http.d/default.conf && echo yes || echo no)" >&2' >> /start.sh \
+    && echo 'echo "Config listen directive: $(grep listen /etc/nginx/http.d/default.conf)" >&2' >> /start.sh \
+    && echo 'echo "" >&2' >> /start.sh \
     && echo '' >> /start.sh \
     && echo 'cd /var/www/html' >> /start.sh \
     && echo '' >> /start.sh \
     && echo '# Start supervisor (this will not return)' >> /start.sh \
+    && echo 'echo "Starting supervisord..." >&2' >> /start.sh \
     && echo 'exec /usr/bin/supervisord -c /etc/supervisord.conf' >> /start.sh \
     && chmod +x /start.sh
 
