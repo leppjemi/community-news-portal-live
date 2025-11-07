@@ -41,16 +41,15 @@ jobs:
           cache: 'npm'
           cache-dependency-path: src/package-lock.json
 
-      - name: Copy .env file
+      - name: Install Composer dependencies
+        working-directory: src
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Copy .env file and generate key
+        working-directory: src
         run: |
-          cd src
           cp .env.example .env || true
           php artisan key:generate
-
-      - name: Install Composer dependencies
-        run: |
-          cd src
-          composer install --prefer-dist --no-progress --no-interaction
 
       - name: Install NPM dependencies
         working-directory: src
@@ -61,6 +60,7 @@ jobs:
         run: npm run build
 
       - name: Run database migrations
+        working-directory: src
         env:
           DB_CONNECTION: mysql
           DB_HOST: 127.0.0.1
@@ -68,11 +68,10 @@ jobs:
           DB_DATABASE: community_db
           DB_USERNAME: user
           DB_PASSWORD: user
-        run: |
-          cd src
-          php artisan migrate --force
+        run: php artisan migrate --force
 
       - name: Run tests
+        working-directory: src
         env:
           DB_CONNECTION: mysql
           DB_HOST: 127.0.0.1
@@ -80,9 +79,7 @@ jobs:
           DB_DATABASE: community_db
           DB_USERNAME: user
           DB_PASSWORD: user
-        run: |
-          cd src
-          php artisan test
+        run: php artisan test
 
   lint:
     name: Code Quality
@@ -100,14 +97,12 @@ jobs:
           tools: composer
 
       - name: Install Composer dependencies
-        run: |
-          cd src
-          composer install --prefer-dist --no-progress --no-interaction
+        working-directory: src
+        run: composer install --prefer-dist --no-progress --no-interaction
 
       - name: Run Pint (Laravel Code Style)
-        run: |
-          cd src
-          ./vendor/bin/pint --test
+        working-directory: src
+        run: ./vendor/bin/pint --test
 
   build:
     name: Build Docker Image
