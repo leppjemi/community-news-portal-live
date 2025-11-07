@@ -137,20 +137,49 @@ EXPOSE 80
 COPY railway/init-app.sh /usr/local/bin/init-app.sh
 RUN chmod +x /usr/local/bin/init-app.sh
 
-# Create startup script
+# Create startup script that configures Nginx before starting supervisor
 RUN echo '#!/bin/sh' > /start.sh \
+    && echo 'set -e' >> /start.sh \
+    && echo '' >> /start.sh \
+    && echo '# Get PORT from environment or default to 80' >> /start.sh \
     && echo 'PORT=${PORT:-80}' >> /start.sh \
-    && echo 'echo "=== Starting Laravel Application ===" >&2' >> /start.sh \
-    && echo 'echo "PORT environment variable: $PORT" >&2' >> /start.sh \
-    && echo 'echo "Configuring Nginx for port $PORT..." >&2' >> /start.sh \
-    && echo 'sed "s/PORT_PLACEHOLDER/$PORT/" /etc/nginx/http.d/default.conf.template > /etc/nginx/http.d/default.conf || (echo "ERROR: Failed to create Nginx config!" >&2 && exit 1)' >> /start.sh \
-    && echo 'echo "Nginx config created" >&2' >> /start.sh \
-    && echo 'echo "Verifying Nginx config syntax..." >&2' >> /start.sh \
-    && echo 'nginx -t 2>&1 || (echo "ERROR: Nginx config test failed!" >&2 && echo "Config contents:" >&2 && cat /etc/nginx/http.d/default.conf >&2 && exit 1)' >> /start.sh \
-    && echo 'echo "Nginx config is valid, will listen on 0.0.0.0:$PORT" >&2' >> /start.sh \
+    && echo '' >> /start.sh \
+    && echo 'echo "==================================="' >> /start.sh \
+    && echo 'echo "Starting Laravel Application"' >> /start.sh \
+    && echo 'echo "==================================="' >> /start.sh \
+    && echo 'echo "PORT: $PORT"' >> /start.sh \
+    && echo 'echo ""' >> /start.sh \
+    && echo '' >> /start.sh \
+    && echo '# Configure Nginx with the correct port' >> /start.sh \
+    && echo 'echo "Configuring Nginx to listen on 0.0.0.0:$PORT..."' >> /start.sh \
+    && echo 'sed "s/PORT_PLACEHOLDER/$PORT/" /etc/nginx/http.d/default.conf.template > /etc/nginx/http.d/default.conf' >> /start.sh \
+    && echo 'if [ $? -ne 0 ]; then' >> /start.sh \
+    && echo '    echo "ERROR: Failed to create Nginx config!" >&2' >> /start.sh \
+    && echo '    exit 1' >> /start.sh \
+    && echo 'fi' >> /start.sh \
+    && echo 'echo "✓ Nginx config created"' >> /start.sh \
+    && echo '' >> /start.sh \
+    && echo '# Test Nginx configuration' >> /start.sh \
+    && echo 'echo "Testing Nginx configuration..."' >> /start.sh \
+    && echo 'nginx -t 2>&1' >> /start.sh \
+    && echo 'if [ $? -ne 0 ]; then' >> /start.sh \
+    && echo '    echo "ERROR: Nginx config test failed!" >&2' >> /start.sh \
+    && echo '    echo "Config contents:" >&2' >> /start.sh \
+    && echo '    cat /etc/nginx/http.d/default.conf >&2' >> /start.sh \
+    && echo '    exit 1' >> /start.sh \
+    && echo 'fi' >> /start.sh \
+    && echo 'echo "✓ Nginx config is valid"' >> /start.sh \
+    && echo 'echo ""' >> /start.sh \
+    && echo '' >> /start.sh \
+    && echo 'echo "Starting services..."' >> /start.sh \
+    && echo 'echo "- Nginx will listen on 0.0.0.0:$PORT"' >> /start.sh \
+    && echo 'echo "- PHP-FPM will listen on 127.0.0.1:9000"' >> /start.sh \
+    && echo 'echo "- Health check available at /health"' >> /start.sh \
+    && echo 'echo ""' >> /start.sh \
+    && echo '' >> /start.sh \
     && echo 'cd /var/www/html' >> /start.sh \
-    && echo 'echo "Starting services immediately (Nginx + PHP-FPM)..." >&2' >> /start.sh \
-    && echo 'echo "Laravel initialization will run in background after services start" >&2' >> /start.sh \
+    && echo '' >> /start.sh \
+    && echo '# Start supervisor (this will not return)' >> /start.sh \
     && echo 'exec /usr/bin/supervisord -c /etc/supervisord.conf' >> /start.sh \
     && chmod +x /start.sh
 
