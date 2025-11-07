@@ -5,6 +5,9 @@ PHP_CONTAINER = app
 NGINX_CONTAINER = nginx
 DB_CONTAINER = db
 
+# Preserve working directory for recursive make calls (fixes WSL getcwd issue)
+MAKEDIR := $(CURDIR)
+
 up:
 	$(DOCKER_COMPOSE) up -d 
 
@@ -86,29 +89,29 @@ setup-all:
 	@echo ""
 	@echo "Step 2/9: Waiting for database to be ready..."
 	@sleep 5
-	@$(MAKE) wait-db
+	@cd $(MAKEDIR) && $(MAKE) wait-db
 	@echo ""
 	@echo "Step 3/9: Setting up .env file..."
-	@$(MAKE) setup-env
+	@cd $(MAKEDIR) && $(MAKE) setup-env
 	@echo ""
 	@echo "Step 4/9: Fixing permissions..."
-	@$(MAKE) fix-permission
+	@cd $(MAKEDIR) && $(MAKE) fix-permission
 	@echo ""
 	@echo "Step 5/9: Installing Composer dependencies..."
-	@$(MAKE) composer-install
+	@cd $(MAKEDIR) && $(MAKE) composer-install
 	@echo ""
 	@echo "Step 6/9: Generating application key..."
-	@$(MAKE) key-generate || echo "Key already exists, skipping..."
+	@cd $(MAKEDIR) && $(MAKE) key-generate || echo "Key already exists, skipping..."
 	@echo ""
 	@echo "Step 7/9: Installing NPM dependencies..."
-	@$(MAKE) npm-install
+	@cd $(MAKEDIR) && $(MAKE) npm-install
 	@echo ""
 	@echo "Step 8/9: Building assets..."
-	@$(MAKE) npm-build
+	@cd $(MAKEDIR) && $(MAKE) npm-build
 	@echo ""
 	@echo "Step 9/9: Running migrations and seeding database..."
-	@$(MAKE) migrate
-	@$(MAKE) seed
+	@cd $(MAKEDIR) && $(MAKE) migrate
+	@cd $(MAKEDIR) && $(MAKE) seed
 	@echo ""
 	@echo "✅ Setup complete! Your application is ready."
 	@echo ""

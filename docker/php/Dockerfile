@@ -22,9 +22,10 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy entrypoint script
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+# Copy entrypoint script and ensure Unix line endings
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh 2>/dev/null || true && \
+    chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Set user to www-data
 RUN chown -R www-data:www-data /var/www/html
