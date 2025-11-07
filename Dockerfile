@@ -67,6 +67,17 @@ RUN echo '[www]' > /usr/local/etc/php-fpm.d/zz-railway.conf \
 # Remove any default Nginx configs to ensure ours is used
 RUN rm -f /etc/nginx/http.d/*.conf /etc/nginx/conf.d/*.conf 2>/dev/null || true
 
+# Create a default config (will be overridden by startup script, but ensures nginx can start)
+RUN echo 'server {' > /etc/nginx/http.d/default.conf \
+    && echo '    listen 0.0.0.0:80;' >> /etc/nginx/http.d/default.conf \
+    && echo '    server_name _;' >> /etc/nginx/http.d/default.conf \
+    && echo '    index index.php index.html;' >> /etc/nginx/http.d/default.conf \
+    && echo '    root /var/www/html/public;' >> /etc/nginx/http.d/default.conf \
+    && echo '    location = /health { return 200 "healthy\n"; add_header Content-Type text/plain; }' >> /etc/nginx/http.d/default.conf \
+    && echo '    location / { try_files $uri $uri/ /index.php?$query_string; }' >> /etc/nginx/http.d/default.conf \
+    && echo '    location ~ \.php$ { fastcgi_pass 127.0.0.1:9000; fastcgi_index index.php; include fastcgi_params; fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; }' >> /etc/nginx/http.d/default.conf \
+    && echo '}' >> /etc/nginx/http.d/default.conf
+
 # Create Nginx configuration template (PORT will be substituted at runtime)
 RUN echo 'server {' > /etc/nginx/http.d/default.conf.template \
     && echo '    listen 0.0.0.0:PORT_PLACEHOLDER;' >> /etc/nginx/http.d/default.conf.template \
@@ -115,7 +126,7 @@ RUN echo '[supervisord]' > /etc/supervisord.conf \
     && echo 'stdout_logfile_maxbytes=0' >> /etc/supervisord.conf \
     && echo '' >> /etc/supervisord.conf \
     && echo '[program:nginx]' >> /etc/supervisord.conf \
-    && echo 'command=/bin/sh -c "echo \"Starting Nginx...\" && cat /etc/nginx/http.d/default.conf | head -5 && nginx -g \"daemon off;\""' >> /etc/supervisord.conf \
+    && echo 'command=/bin/sh -c "if [ -f /etc/nginx/http.d/default.conf ]; then echo \"Nginx config found, starting...\" && cat /etc/nginx/http.d/default.conf | head -5; else echo \"WARNING: Nginx config not found, waiting...\" && sleep 2 && if [ -f /etc/nginx/http.d/default.conf ]; then echo \"Config now exists\"; else echo \"ERROR: Config still missing!\"; fi; fi && nginx -g \"daemon off;\""' >> /etc/supervisord.conf \
     && echo 'autostart=true' >> /etc/supervisord.conf \
     && echo 'autorestart=true' >> /etc/supervisord.conf \
     && echo 'priority=10' >> /etc/supervisord.conf \
@@ -158,68 +169,65 @@ COPY railway/init-app.sh /usr/local/bin/init-app.sh
 RUN chmod +x /usr/local/bin/init-app.sh
 
 # Create startup script that configures Nginx before starting supervisor
+# Use a separate script file for better debugging
 RUN echo '#!/bin/sh' > /start.sh \
-    && echo 'set -e' >> /start.sh \
+    && echo '' >> /start.sh \
+    && echo 'echo "===================================" >&2' >> /start.sh \
+    && echo 'echo "STARTUP SCRIPT RUNNING" >&2' >> /start.sh \
+    && echo 'echo "===================================" >&2' >> /start.sh \
     && echo '' >> /start.sh \
     && echo '# Get PORT from environment or default to 80' >> /start.sh \
     && echo 'PORT=${PORT:-80}' >> /start.sh \
-    && echo '' >> /start.sh \
-    && echo 'echo "===================================" >&2' >> /start.sh \
-    && echo 'echo "Starting Laravel Application" >&2' >> /start.sh \
-    && echo 'echo "===================================" >&2' >> /start.sh \
-    && echo 'echo "PORT: $PORT" >&2' >> /start.sh \
-    && echo 'echo "" >&2' >> /start.sh \
+    && echo 'echo "PORT environment variable: $PORT" >&2' >> /start.sh \
     && echo '' >> /start.sh \
     && echo '# Remove any existing nginx configs' >> /start.sh \
+    && echo 'echo "Removing existing Nginx configs..." >&2' >> /start.sh \
     && echo 'rm -f /etc/nginx/http.d/*.conf /etc/nginx/conf.d/*.conf 2>/dev/null || true' >> /start.sh \
+    && echo '' >> /start.sh \
+    && echo '# Verify template exists' >> /start.sh \
+    && echo 'if [ ! -f /etc/nginx/http.d/default.conf.template ]; then' >> /start.sh \
+    && echo '    echo "ERROR: Nginx template not found!" >&2' >> /start.sh \
+    && echo '    exit 1' >> /start.sh \
+    && echo 'fi' >> /start.sh \
+    && echo 'echo "Template found, creating config..." >&2' >> /start.sh \
     && echo '' >> /start.sh \
     && echo '# Configure Nginx with the correct port' >> /start.sh \
     && echo 'echo "Configuring Nginx to listen on 0.0.0.0:$PORT..." >&2' >> /start.sh \
     && echo 'sed "s/PORT_PLACEHOLDER/$PORT/" /etc/nginx/http.d/default.conf.template > /etc/nginx/http.d/default.conf' >> /start.sh \
-    && echo 'if [ $? -ne 0 ]; then' >> /start.sh \
-    && echo '    echo "ERROR: Failed to create Nginx config!" >&2' >> /start.sh \
+    && echo 'CONFIG_EXIT=$?' >> /start.sh \
+    && echo 'if [ $CONFIG_EXIT -ne 0 ]; then' >> /start.sh \
+    && echo '    echo "ERROR: Failed to create Nginx config! Exit code: $CONFIG_EXIT" >&2' >> /start.sh \
     && echo '    exit 1' >> /start.sh \
     && echo 'fi' >> /start.sh \
     && echo 'echo "✓ Nginx config created" >&2' >> /start.sh \
-    && echo 'echo "Config file location: /etc/nginx/http.d/default.conf" >&2' >> /start.sh \
     && echo '' >> /start.sh \
-    && echo '# Verify config file exists and has correct content' >> /start.sh \
+    && echo '# Verify config file exists' >> /start.sh \
     && echo 'if [ ! -f /etc/nginx/http.d/default.conf ]; then' >> /start.sh \
-    && echo '    echo "ERROR: Nginx config file does not exist!" >&2' >> /start.sh \
+    && echo '    echo "ERROR: Nginx config file does not exist after creation!" >&2' >> /start.sh \
+    && echo '    ls -la /etc/nginx/http.d/ >&2 || echo "Cannot list directory" >&2' >> /start.sh \
     && echo '    exit 1' >> /start.sh \
     && echo 'fi' >> /start.sh \
     && echo 'echo "Config file exists, showing listen directive:" >&2' >> /start.sh \
-    && echo 'grep "listen" /etc/nginx/http.d/default.conf >&2' >> /start.sh \
+    && echo 'grep "listen" /etc/nginx/http.d/default.conf >&2 || echo "WARNING: listen directive not found!" >&2' >> /start.sh \
     && echo '' >> /start.sh \
     && echo '# Test Nginx configuration' >> /start.sh \
     && echo 'echo "Testing Nginx configuration..." >&2' >> /start.sh \
     && echo 'nginx -t >&2' >> /start.sh \
-    && echo 'if [ $? -ne 0 ]; then' >> /start.sh \
-    && echo '    echo "ERROR: Nginx config test failed!" >&2' >> /start.sh \
+    && echo 'NGINX_TEST_EXIT=$?' >> /start.sh \
+    && echo 'if [ $NGINX_TEST_EXIT -ne 0 ]; then' >> /start.sh \
+    && echo '    echo "ERROR: Nginx config test failed! Exit code: $NGINX_TEST_EXIT" >&2' >> /start.sh \
     && echo '    echo "Config contents:" >&2' >> /start.sh \
     && echo '    cat /etc/nginx/http.d/default.conf >&2' >> /start.sh \
     && echo '    exit 1' >> /start.sh \
     && echo 'fi' >> /start.sh \
     && echo 'echo "✓ Nginx config is valid" >&2' >> /start.sh \
+    && echo '' >> /start.sh \
     && echo 'echo "Final config summary:" >&2' >> /start.sh \
     && echo 'grep "listen" /etc/nginx/http.d/default.conf >&2' >> /start.sh \
     && echo 'grep "location.*health" /etc/nginx/http.d/default.conf >&2' >> /start.sh \
-    && echo 'echo "" >&2' >> /start.sh \
     && echo '' >> /start.sh \
-    && echo 'echo "Starting services..." >&2' >> /start.sh \
-    && echo 'echo "- Nginx will listen on 0.0.0.0:$PORT" >&2' >> /start.sh \
-    && echo 'echo "- PHP-FPM will listen on 127.0.0.1:9000" >&2' >> /start.sh \
-    && echo 'echo "- Health check available at http://0.0.0.0:$PORT/health" >&2' >> /start.sh \
-    && echo 'echo "" >&2' >> /start.sh \
-    && echo 'echo "Final verification before starting supervisor:" >&2' >> /start.sh \
-    && echo 'echo "Config file exists: $(test -f /etc/nginx/http.d/default.conf && echo yes || echo no)" >&2' >> /start.sh \
-    && echo 'echo "Config listen directive: $(grep listen /etc/nginx/http.d/default.conf)" >&2' >> /start.sh \
-    && echo 'echo "" >&2' >> /start.sh \
-    && echo '' >> /start.sh \
-    && echo 'cd /var/www/html' >> /start.sh \
-    && echo '' >> /start.sh \
-    && echo '# Start supervisor (this will not return)' >> /start.sh \
     && echo 'echo "Starting supervisord..." >&2' >> /start.sh \
+    && echo 'cd /var/www/html' >> /start.sh \
     && echo 'exec /usr/bin/supervisord -c /etc/supervisord.conf' >> /start.sh \
     && chmod +x /start.sh
 
