@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\NewsPost;
 use App\Models\SocialShareClick;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class SocialShareClickSeeder extends Seeder
 {
@@ -36,9 +35,10 @@ class SocialShareClickSeeder extends Seeder
 
         // Get all published news posts
         $newsPosts = NewsPost::where('status', 'published')->get();
-        
+
         if ($newsPosts->isEmpty()) {
             $this->command->warn('No published news posts found. Please run NewsPostSeeder first.');
+
             return;
         }
 
@@ -47,35 +47,35 @@ class SocialShareClickSeeder extends Seeder
         $totalShares = 0;
 
         // Generate shares for news articles
-        $this->command->info("Generating shares for news articles...");
+        $this->command->info('Generating shares for news articles...');
 
         foreach ($newsPosts as $index => $post) {
             // Base shares per article (0-30)
             $articleShares = rand(0, 30);
-            
+
             // Some articles are more popular (viral effect - 20% chance)
             if (rand(1, 10) <= 2) {
                 $articleShares = rand(50, 150);
             }
-            
+
             // Recent articles tend to get more shares (published in last 7 days)
-            $daysSincePublished = $post->published_at 
-                ? now()->diffInDays($post->published_at) 
+            $daysSincePublished = $post->published_at
+                ? now()->diffInDays($post->published_at)
                 : rand(0, 30);
-            
+
             if ($daysSincePublished <= 7) {
-                $articleShares = (int)($articleShares * 1.5);
+                $articleShares = (int) ($articleShares * 1.5);
             }
 
             for ($i = 0; $i < $articleShares; $i++) {
                 $platform = $this->getRandomPlatform($platforms, $platformWeights);
-                
+
                 // Shares are more likely to happen shortly after publication
                 $createdAt = $this->getRandomDateWeighted($post->published_at ?? now()->subDays(30));
 
                 SocialShareClick::create([
                     'platform' => $platform,
-                    'page_url' => url('/news/' . $post->slug),
+                    'page_url' => url('/news/'.$post->slug),
                     'page_type' => SocialShareClick::PAGE_TYPE_NEWS,
                     'news_post_id' => $post->id,
                     'ip_address' => $this->generateRandomIp(),
@@ -89,7 +89,7 @@ class SocialShareClickSeeder extends Seeder
         }
 
         // Generate shares for home page (30% of total shares)
-        $homeShareCount = (int)($totalShares * 0.3);
+        $homeShareCount = (int) ($totalShares * 0.3);
         $this->command->info("Generating {$homeShareCount} shares for home page...");
 
         for ($i = 0; $i < $homeShareCount; $i++) {
@@ -111,14 +111,14 @@ class SocialShareClickSeeder extends Seeder
         }
 
         $this->command->info("Successfully generated {$totalShares} social share clicks!");
-        $this->command->info("  - News articles: " . SocialShareClick::where('page_type', SocialShareClick::PAGE_TYPE_NEWS)->count());
-        $this->command->info("  - Home page: " . SocialShareClick::where('page_type', SocialShareClick::PAGE_TYPE_HOME)->count());
-        
+        $this->command->info('  - News articles: '.SocialShareClick::where('page_type', SocialShareClick::PAGE_TYPE_NEWS)->count());
+        $this->command->info('  - Home page: '.SocialShareClick::where('page_type', SocialShareClick::PAGE_TYPE_HOME)->count());
+
         // Show breakdown by platform
         $this->command->info("\nShares by platform:");
         foreach ($platforms as $platform) {
             $count = SocialShareClick::where('platform', $platform)->count();
-            $this->command->info("  - " . ucfirst($platform) . ": {$count}");
+            $this->command->info('  - '.ucfirst($platform).": {$count}");
         }
     }
 
@@ -149,7 +149,7 @@ class SocialShareClickSeeder extends Seeder
         $daysAgo = rand(0, 30);
         $hoursAgo = rand(0, 23);
         $minutesAgo = rand(0, 59);
-        
+
         return \Carbon\Carbon::parse($baseDate)
             ->subDays($daysAgo)
             ->subHours($hoursAgo)
@@ -163,16 +163,16 @@ class SocialShareClickSeeder extends Seeder
     {
         $base = \Carbon\Carbon::parse($baseDate);
         $now = now();
-        
+
         // Calculate days since publication
         $daysSincePublication = $base->diffInDays($now);
-        
+
         // If published in the future or very recently, use current time as max
         $maxDays = min(30, max(0, $daysSincePublication));
-        
+
         // Weight: 40% chance in first 3 days, 30% in days 4-7, 20% in days 8-14, 10% in days 15-30
         $random = rand(1, 100);
-        
+
         if ($random <= 40) {
             $daysAfter = min(rand(0, 3), $maxDays);
         } elseif ($random <= 70) {
@@ -182,17 +182,17 @@ class SocialShareClickSeeder extends Seeder
         } else {
             $daysAfter = min(rand(15, 30), $maxDays);
         }
-        
+
         $hoursAgo = rand(0, 23);
         $minutesAgo = rand(0, 59);
-        
+
         $shareDate = $base->copy()->addDays($daysAfter)->subHours($hoursAgo)->subMinutes($minutesAgo);
-        
+
         // Ensure we don't go into the future
         if ($shareDate->isFuture()) {
             $shareDate = $now->copy()->subHours(rand(0, 23))->subMinutes(rand(0, 59));
         }
-        
+
         return $shareDate;
     }
 
@@ -204,13 +204,13 @@ class SocialShareClickSeeder extends Seeder
         // Generate realistic IP addresses
         if (rand(1, 2) === 1) {
             // IPv4
-            return rand(1, 255) . '.' . rand(1, 255) . '.' . rand(1, 255) . '.' . rand(1, 255);
+            return rand(1, 255).'.'.rand(1, 255).'.'.rand(1, 255).'.'.rand(1, 255);
         } else {
             // IPv6 (simplified)
             return sprintf(
                 '%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x',
-                rand(0, 0xffff), rand(0, 0xffff), rand(0, 0xffff), rand(0, 0xffff),
-                rand(0, 0xffff), rand(0, 0xffff), rand(0, 0xffff), rand(0, 0xffff)
+                rand(0, 0xFFFF), rand(0, 0xFFFF), rand(0, 0xFFFF), rand(0, 0xFFFF),
+                rand(0, 0xFFFF), rand(0, 0xFFFF), rand(0, 0xFFFF), rand(0, 0xFFFF)
             );
         }
     }
@@ -234,4 +234,3 @@ class SocialShareClickSeeder extends Seeder
         return $browsers[array_rand($browsers)];
     }
 }
-

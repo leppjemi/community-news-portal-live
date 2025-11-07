@@ -2,21 +2,26 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
 
 class SocialShareClick extends Model
 {
     // Platform constants
     public const FACEBOOK = 'facebook';
+
     public const TWITTER = 'twitter';
+
     public const WHATSAPP = 'whatsapp';
+
     public const TELEGRAM = 'telegram';
+
     public const EMAIL = 'email';
 
     // Page type constants
     public const PAGE_TYPE_HOME = 'home';
+
     public const PAGE_TYPE_NEWS = 'news';
 
     protected $fillable = [
@@ -51,11 +56,12 @@ class SocialShareClick extends Model
     {
         $tableName = (new static)->getTable();
         if ($startDate) {
-            $query->whereDate($tableName . '.created_at', '>=', $startDate);
+            $query->whereDate($tableName.'.created_at', '>=', $startDate);
         }
         if ($endDate) {
-            $query->whereDate($tableName . '.created_at', '<=', $endDate);
+            $query->whereDate($tableName.'.created_at', '<=', $endDate);
         }
+
         return $query;
     }
 
@@ -67,6 +73,7 @@ class SocialShareClick extends Model
         if ($pageType) {
             return $query->where('page_type', $pageType);
         }
+
         return $query;
     }
 

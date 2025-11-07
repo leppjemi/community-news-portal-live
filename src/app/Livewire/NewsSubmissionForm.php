@@ -14,13 +14,18 @@ use Livewire\WithFileUploads;
 
 class NewsSubmissionForm extends Component
 {
-    use WithFileUploads, AuthorizesRequests;
+    use AuthorizesRequests, WithFileUploads;
 
     public $postId = null;
+
     public $title = '';
+
     public $content = '';
+
     public $category_id = '';
+
     public $cover_image;
+
     public $existing_image = null;
 
     protected $rules = [
@@ -35,7 +40,7 @@ class NewsSubmissionForm extends Component
         if ($postId) {
             $post = NewsPost::findOrFail($postId);
             Gate::authorize('update', $post);
-            
+
             $this->postId = $post->id;
             $this->title = $post->title;
             $this->content = $post->content;
@@ -53,7 +58,7 @@ class NewsSubmissionForm extends Component
             Gate::authorize('update', $post);
         } else {
             Gate::authorize('create', NewsPost::class);
-            $post = new NewsPost();
+            $post = new NewsPost;
             $post->user_id = Auth::id();
             $post->status = 'pending';
         }
@@ -67,7 +72,7 @@ class NewsSubmissionForm extends Component
             if ($post->cover_image) {
                 Storage::disk('public')->delete($post->cover_image);
             }
-            
+
             $path = $this->cover_image->store('news', 'public');
             $post->cover_image = $path;
         }
@@ -75,7 +80,7 @@ class NewsSubmissionForm extends Component
         $post->save();
 
         session()->flash('message', $this->postId ? 'Post updated successfully!' : 'Post submitted for review!');
-        
+
         return redirect()->route('my-submissions');
     }
 
@@ -85,6 +90,7 @@ class NewsSubmissionForm extends Component
         $categories = Cache::remember('categories.all', 3600, function () {
             return Category::orderBy('name')->get();
         });
+
         return view('livewire.news-submission-form', compact('categories'));
     }
 }

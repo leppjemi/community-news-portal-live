@@ -11,8 +11,8 @@ class MySubmissionsList extends Component
     public function delete($postId)
     {
         $post = NewsPost::findOrFail($postId);
-        
-        if ($post->user_id !== Auth::id() && !Auth::user()->isEditor()) {
+
+        if ($post->user_id !== Auth::id() && ! Auth::user()->isEditor()) {
             abort(403);
         }
 

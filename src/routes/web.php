@@ -7,7 +7,6 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EditorController;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\NewsPostController;
 use App\Http\Controllers\SocialShareController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -32,16 +31,16 @@ Route::post('/logout', [LogoutController::class, 'logout'])->middleware('auth')-
 // Authenticated routes
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
+
     // User routes
     Route::get('/my-submissions', function () {
         return view('my-submissions');
     })->name('my-submissions');
-    
+
     Route::get('/submit-news', function () {
         return view('submit-news');
     })->name('submit-news');
-    
+
     Route::get('/edit-news/{id}', function ($id) {
         return view('submit-news', ['postId' => $id]);
     })->name('edit-news');

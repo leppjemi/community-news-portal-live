@@ -18,9 +18,9 @@ class HomeController extends Controller
         // Search
         if ($request->has('search')) {
             $search = $request->get('search');
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('content', 'like', "%{$search}%");
+                    ->orWhere('content', 'like', "%{$search}%");
             });
         }
 
@@ -30,7 +30,7 @@ class HomeController extends Controller
         }
 
         $posts = $query->paginate(12);
-        
+
         // Cache categories for 1 hour (3600 seconds) - they rarely change
         $categories = Cache::remember('categories.all', 3600, function () {
             return Category::orderBy('name')->get();

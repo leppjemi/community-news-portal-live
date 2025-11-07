@@ -15,12 +15,12 @@ class EnsureUserHasRole
      */
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return redirect()->route('login');
         }
 
         $user = auth()->user();
-        
+
         foreach ($roles as $role) {
             if ($user->hasRole($role) || ($role === 'editor' && $user->isAdmin())) {
                 return $next($request);

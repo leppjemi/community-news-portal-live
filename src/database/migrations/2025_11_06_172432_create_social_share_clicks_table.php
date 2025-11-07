@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('ip_address', 45)->nullable(); // IPv6 support
             $table->text('user_agent')->nullable();
             $table->timestamps();
-            
+
             // Indexes for query performance
             $table->index('platform');
             $table->index('page_type');

@@ -9,14 +9,16 @@ use Livewire\Component;
 class NewsLikeButton extends Component
 {
     public $post;
+
     public $isLiked = false;
+
     public $likesCount = 0;
 
     public function mount(NewsPost $post)
     {
         $this->post = $post;
         $this->likesCount = $post->likes_count;
-        
+
         if (Auth::check()) {
             $this->isLiked = $post->likers()->where('user_id', Auth::id())->exists();
         }
@@ -24,12 +26,12 @@ class NewsLikeButton extends Component
 
     public function toggleLike()
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return redirect()->route('login');
         }
 
         $user = Auth::user();
-        
+
         if ($this->isLiked) {
             $this->post->likers()->detach($user->id);
             $this->isLiked = false;

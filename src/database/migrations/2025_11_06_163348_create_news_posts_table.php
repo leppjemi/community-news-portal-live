@@ -24,7 +24,7 @@ return new class extends Migration
             $table->unsignedBigInteger('likes_count')->default(0);
             $table->timestamp('published_at')->nullable();
             $table->timestamps();
-            
+
             $table->index('status');
             $table->index('published_at');
         });

@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -20,13 +19,13 @@ return new class extends Migration
             } catch (\Exception $e) {
                 // Index might already exist, ignore
             }
-            
+
             try {
                 $table->index('user_id', 'news_posts_user_id_index');
             } catch (\Exception $e) {
                 // Index might already exist, ignore
             }
-            
+
             // Add composite index for common query pattern: status + published_at
             // This is used in HomeController for filtering published posts
             try {
@@ -48,13 +47,13 @@ return new class extends Migration
             } catch (\Exception $e) {
                 // Index might not exist, ignore
             }
-            
+
             try {
                 $table->dropIndex('news_posts_category_id_index');
             } catch (\Exception $e) {
                 // Index might not exist, ignore
             }
-            
+
             try {
                 $table->dropIndex('news_posts_user_id_index');
             } catch (\Exception $e) {
@@ -63,4 +62,3 @@ return new class extends Migration
         });
     }
 };
-

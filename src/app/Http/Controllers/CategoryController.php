@@ -4,9 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCategoryRequest;
 use App\Models\Category;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Gate;
 
 class CategoryController extends Controller
 {
@@ -18,6 +16,7 @@ class CategoryController extends Controller
     public function index()
     {
         $categories = Category::latest()->paginate(15);
+
         return view('admin.categories.index', compact('categories'));
     }
 
@@ -29,6 +28,7 @@ class CategoryController extends Controller
     public function store(StoreCategoryRequest $request)
     {
         Category::create($request->validated());
+
         // Cache is cleared automatically via model events
         return redirect()->route('admin.categories.index')->with('success', 'Category created successfully!');
     }
@@ -46,12 +46,14 @@ class CategoryController extends Controller
     public function update(StoreCategoryRequest $request, Category $category)
     {
         $category->update($request->validated());
+
         return redirect()->route('admin.categories.index')->with('success', 'Category updated successfully!');
     }
 
     public function destroy(Category $category)
     {
         $category->delete();
+
         return redirect()->route('admin.categories.index')->with('success', 'Category deleted successfully!');
     }
 }

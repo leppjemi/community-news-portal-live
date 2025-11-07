@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\NewsPost;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class NewsPostPolicy
 {
@@ -22,8 +21,8 @@ class NewsPostPolicy
     public function view(User $user, NewsPost $newsPost): bool
     {
         // Users can view their own posts, editors/admins can view all, guests can view published
-        return $newsPost->isPublished() 
-            || $user->id === $newsPost->user_id 
+        return $newsPost->isPublished()
+            || $user->id === $newsPost->user_id
             || $user->isEditor();
     }
 

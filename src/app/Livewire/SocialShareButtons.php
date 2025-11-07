@@ -7,8 +7,11 @@ use Livewire\Component;
 class SocialShareButtons extends Component
 {
     public $pageUrl;
+
     public $pageTitle;
+
     public $pageType;
+
     public $newsPostId = null;
 
     public function mount($pageUrl, $pageTitle, $pageType = null, $newsPostId = null)

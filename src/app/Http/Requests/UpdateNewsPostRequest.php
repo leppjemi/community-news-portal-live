@@ -14,6 +14,7 @@ class UpdateNewsPostRequest extends FormRequest
     public function authorize(): bool
     {
         $post = $this->route('newsPost') ?? NewsPost::find($this->route('id'));
+
         return Gate::allows('update', $post);
     }
 

@@ -17,6 +17,7 @@ class UserController extends Controller
     public function index()
     {
         $users = User::latest()->paginate(15);
+
         return view('admin.users.index', compact('users'));
     }
 
@@ -59,7 +60,7 @@ class UserController extends Controller
             'role' => 'required|in:user,editor,admin',
         ]);
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
             unset($validated['password']);
@@ -73,6 +74,7 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         $user->delete();
+
         return redirect()->route('admin.users.index')->with('success', 'User deleted successfully!');
     }
 }
