@@ -1,0 +1,23 @@
+# Nixpacks configuration for Railway (alternative to Dockerfile)
+# Railway will auto-detect Laravel, but this provides explicit configuration
+
+[phases.setup]
+nixPkgs = ["php83", "composer", "nodejs-20_x"]
+
+[phases.install]
+cmds = [
+  "cd src && composer install --no-dev --optimize-autoloader --no-interaction",
+  "cd src && npm ci",
+  "cd src && npm run build"
+]
+
+[phases.build]
+cmds = [
+  "cd src && php artisan config:cache",
+  "cd src && php artisan route:cache",
+  "cd src && php artisan view:cache"
+]
+
+[start]
+cmd = "sh railway-start.sh"
+
