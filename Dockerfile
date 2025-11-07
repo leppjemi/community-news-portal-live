@@ -44,15 +44,25 @@ RUN mkdir -p storage/framework/{sessions,views,cache} \
     && chmod -R 775 storage bootstrap/cache
 
 # Configure PHP-FPM to listen on TCP port 9000
-RUN sed -i 's/listen = .*/listen = 127.0.0.1:9000/' /usr/local/etc/php-fpm.d/www.conf || \
-    echo 'listen = 127.0.0.1:9000' >> /usr/local/etc/php-fpm.d/www.conf
+# Create a custom PHP-FPM pool configuration
+RUN echo '[www]' > /usr/local/etc/php-fpm.d/zz-railway.conf \
+    && echo 'user = www-data' >> /usr/local/etc/php-fpm.d/zz-railway.conf \
+    && echo 'group = www-data' >> /usr/local/etc/php-fpm.d/zz-railway.conf \
+    && echo 'listen = 127.0.0.1:9000' >> /usr/local/etc/php-fpm.d/zz-railway.conf \
+    && echo 'listen.owner = www-data' >> /usr/local/etc/php-fpm.d/zz-railway.conf \
+    && echo 'listen.group = www-data' >> /usr/local/etc/php-fpm.d/zz-railway.conf \
+    && echo 'pm = dynamic' >> /usr/local/etc/php-fpm.d/zz-railway.conf \
+    && echo 'pm.max_children = 5' >> /usr/local/etc/php-fpm.d/zz-railway.conf \
+    && echo 'pm.start_servers = 2' >> /usr/local/etc/php-fpm.d/zz-railway.conf \
+    && echo 'pm.min_spare_servers = 1' >> /usr/local/etc/php-fpm.d/zz-railway.conf \
+    && echo 'pm.max_spare_servers = 3' >> /usr/local/etc/php-fpm.d/zz-railway.conf
 
 # Create Nginx configuration template (PORT will be substituted at runtime)
 RUN echo 'server {' > /etc/nginx/http.d/default.conf.template \
     && echo '    listen PORT_PLACEHOLDER;' >> /etc/nginx/http.d/default.conf.template \
+    && echo '    server_name _;' >> /etc/nginx/http.d/default.conf.template \
     && echo '    index index.php index.html;' >> /etc/nginx/http.d/default.conf.template \
     && echo '    root /var/www/html/public;' >> /etc/nginx/http.d/default.conf.template \
-    && echo '    server_name _;' >> /etc/nginx/http.d/default.conf.template \
     && echo '' >> /etc/nginx/http.d/default.conf.template \
     && echo '    location / {' >> /etc/nginx/http.d/default.conf.template \
     && echo '        try_files $uri $uri/ /index.php?$query_string;' >> /etc/nginx/http.d/default.conf.template \
@@ -103,12 +113,17 @@ RUN chmod +x /usr/local/bin/init-app.sh
 
 # Create startup script
 RUN echo '#!/bin/sh' > /start.sh \
+    && echo 'set -e' >> /start.sh \
     && echo 'PORT=${PORT:-80}' >> /start.sh \
+    && echo 'echo "=== Starting Laravel Application ==="' >> /start.sh \
     && echo 'echo "Configuring Nginx for port $PORT..."' >> /start.sh \
     && echo 'sed "s/PORT_PLACEHOLDER/$PORT/" /etc/nginx/http.d/default.conf.template > /etc/nginx/http.d/default.conf' >> /start.sh \
+    && echo 'echo "Nginx config created"' >> /start.sh \
     && echo 'cd /var/www/html' >> /start.sh \
     && echo 'echo "Running Laravel initialization..."' >> /start.sh \
     && echo '/usr/local/bin/init-app.sh || echo "Warning: Initialization had errors, but continuing..."' >> /start.sh \
+    && echo 'echo "Verifying PHP-FPM configuration..."' >> /start.sh \
+    && echo 'grep "listen = 127.0.0.1:9000" /usr/local/etc/php-fpm.d/zz-railway.conf || echo "WARNING: PHP-FPM not configured for TCP!"' >> /start.sh \
     && echo 'echo "Starting services (Nginx + PHP-FPM)..."' >> /start.sh \
     && echo 'exec /usr/bin/supervisord -c /etc/supervisord.conf' >> /start.sh \
     && chmod +x /start.sh
