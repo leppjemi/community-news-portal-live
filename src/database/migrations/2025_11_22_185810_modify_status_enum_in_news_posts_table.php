@@ -9,12 +9,16 @@ return new class extends Migration {
     /**
      * Run the migrations.
      */
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        DB::statement("ALTER TABLE news_posts MODIFY COLUMN status ENUM('pending', 'approved', 'published', 'rejected') NOT NULL DEFAULT 'pending'");
+        if (DB::getDriverName() === 'mysql') {
+            // MySQL supports MODIFY COLUMN with ENUM
+            DB::statement("ALTER TABLE news_posts MODIFY COLUMN status ENUM('pending', 'approved', 'published', 'rejected') NOT NULL DEFAULT 'pending'");
+        } else {
+            Schema::table('news_posts', function (Blueprint $table) {
+                $table->string('status', 20)->default('pending')->change();
+            });
+        }
     }
 
     /**
@@ -22,6 +26,13 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE news_posts MODIFY COLUMN status ENUM('pending', 'approved', 'published') NOT NULL DEFAULT 'pending'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE news_posts MODIFY COLUMN status ENUM('pending', 'approved', 'published') NOT NULL DEFAULT 'pending'");
+        } else {
+
+            Schema::table('news_posts', function (Blueprint $table) {
+                $table->string('status', 20)->default('pending')->change();
+            });
+        }
     }
 };
