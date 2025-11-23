@@ -61,8 +61,9 @@ class NewsPostSeeder extends Seeder
 
             foreach ($categoriesList as $category) {
                 for ($i = 0; $i < $countPerCategory; $i++) {
-                    if ($created >= $targetCount)
+                    if ($created >= $targetCount) {
                         break;
+                    }
 
                     $article = $this->generateRealisticArticle($category->name);
 
@@ -94,7 +95,7 @@ class NewsPostSeeder extends Seeder
             $slug = $baseSlug;
             $counter = 1;
             while (NewsPost::where('slug', $slug)->exists()) {
-                $slug = $baseSlug . '-' . $counter;
+                $slug = $baseSlug.'-'.$counter;
                 $counter++;
             }
 
@@ -137,46 +138,46 @@ class NewsPostSeeder extends Seeder
     {
         $templates = [
             'Technology' => [
-                "New {Tech} innovation promises to revolutionize {Industry}",
-                "{Company} announces breakthrough in {Tech} research",
-                "Cybersecurity alert: New {Crime} targeting {Industry}",
-                "Review: The latest {Tech} gadget everyone is talking about",
-                "How AI is reshaping the {Industry} landscape in Malaysia",
+                'New {Tech} innovation promises to revolutionize {Industry}',
+                '{Company} announces breakthrough in {Tech} research',
+                'Cybersecurity alert: New {Crime} targeting {Industry}',
+                'Review: The latest {Tech} gadget everyone is talking about',
+                'How AI is reshaping the {Industry} landscape in Malaysia',
             ],
             'Politics' => [
-                "Govt announces new {Policy} for {Sector} sector",
-                "Parliament debates {Issue} affecting {State} residents",
-                "Minister visits {City} to oversee {Project} progress",
-                "Election Commission prepares for upcoming {State} polls",
-                "Bilateral talks between Malaysia and {Country} conclude successfully",
+                'Govt announces new {Policy} for {Sector} sector',
+                'Parliament debates {Issue} affecting {State} residents',
+                'Minister visits {City} to oversee {Project} progress',
+                'Election Commission prepares for upcoming {State} polls',
+                'Bilateral talks between Malaysia and {Country} conclude successfully',
             ],
             'Sports' => [
-                "Badminton: {Player} advances to finals in {Tournament}",
-                "{Team} wins crucial match against {Opponent} in {League}",
-                "Malaysia to host international {Sport} championship next year",
-                "Local athlete breaks national record in {Sport}",
-                "Football: {Team} signs new striker for upcoming season",
+                'Badminton: {Player} advances to finals in {Tournament}',
+                '{Team} wins crucial match against {Opponent} in {League}',
+                'Malaysia to host international {Sport} championship next year',
+                'Local athlete breaks national record in {Sport}',
+                'Football: {Team} signs new striker for upcoming season',
             ],
             'Entertainment' => [
-                "{Celebrity} spotted in {City} filming new movie",
-                "Local film wins award at international film festival",
-                "Concert review: {Artist} mesmerizes crowd in Kuala Lumpur",
-                "Exclusive interview with rising star {Celebrity}",
-                "New reality show set to premiere on local TV",
+                '{Celebrity} spotted in {City} filming new movie',
+                'Local film wins award at international film festival',
+                'Concert review: {Artist} mesmerizes crowd in Kuala Lumpur',
+                'Exclusive interview with rising star {Celebrity}',
+                'New reality show set to premiere on local TV',
             ],
             'Business' => [
-                "{Company} reports record profits for Q3, shares surge",
-                "Oil prices rise amid global {Event} concerns",
-                "{Bank} launches new digital banking app for SMEs",
-                "Ringgit strengthens against US dollar amid economic optimism",
-                "New investment incentives for {Sector} announced",
+                '{Company} reports record profits for Q3, shares surge',
+                'Oil prices rise amid global {Event} concerns',
+                '{Bank} launches new digital banking app for SMEs',
+                'Ringgit strengthens against US dollar amid economic optimism',
+                'New investment incentives for {Sector} announced',
             ],
             'Health' => [
-                "Health Ministry launches campaign against {Disease}",
-                "New study reveals benefits of {Food} for heart health",
-                "Hospitals in {State} on high alert for {Disease} outbreak",
-                "Tips for maintaining mental wellness during busy times",
-                "Vaccination drive for {Disease} begins in {City}",
+                'Health Ministry launches campaign against {Disease}',
+                'New study reveals benefits of {Food} for heart health',
+                'Hospitals in {State} on high alert for {Disease} outbreak',
+                'Tips for maintaining mental wellness during busy times',
+                'Vaccination drive for {Disease} begins in {City}',
             ],
         ];
 
@@ -223,15 +224,15 @@ class NewsPostSeeder extends Seeder
 
         // Generate some realistic content
         $content = "LOREM IPSUM GENERATOR WOULD BE HERE BUT WE WANT REALISTIC TEXT. \n\n";
-        $content .= "In a recent development regarding " . $categoryName . ", " . lcfirst($title) . ". This has caused significant reaction from the public and officials alike. ";
-        $content .= "According to sources, the situation is being monitored closely. Authorities have urged everyone to remain calm and follow official guidelines. ";
-        $content .= "\n\nExperts believe this could have long-term implications for the " . (str_contains($title, 'Economy') ? 'economy' : 'community') . ". ";
-        $content .= "More updates will follow as the story develops.";
+        $content .= 'In a recent development regarding '.$categoryName.', '.lcfirst($title).'. This has caused significant reaction from the public and officials alike. ';
+        $content .= 'According to sources, the situation is being monitored closely. Authorities have urged everyone to remain calm and follow official guidelines. ';
+        $content .= "\n\nExperts believe this could have long-term implications for the ".(str_contains($title, 'Economy') ? 'economy' : 'community').'. ';
+        $content .= 'More updates will follow as the story develops.';
 
         return [
             'title' => $title,
             'content' => $content,
-            'cover_image' => null // Will be generated by getImageUrl
+            'cover_image' => null, // Will be generated by getImageUrl
         ];
     }
 
@@ -240,7 +241,7 @@ class NewsPostSeeder extends Seeder
      */
     private function determineCategory(string $title, string $content, $categories, array $categoryMap): Category
     {
-        $text = strtolower($title . ' ' . $content);
+        $text = strtolower($title.' '.$content);
         $matchedCategories = [];
 
         foreach ($categoryMap as $categoryName => $keywords) {
@@ -254,7 +255,7 @@ class NewsPostSeeder extends Seeder
             }
         }
 
-        if (!empty($matchedCategories)) {
+        if (! empty($matchedCategories)) {
             // Return a random category from the matches to avoid bias towards the first checked category
             return $matchedCategories[array_rand($matchedCategories)];
         }
@@ -269,7 +270,7 @@ class NewsPostSeeder extends Seeder
      */
     private function getImageUrl(string $title, string $content): string
     {
-        $text = strtolower($title . ' ' . $content);
+        $text = strtolower($title.' '.$content);
 
         // Map keywords to search terms for Unsplash
         $keywordMap = [

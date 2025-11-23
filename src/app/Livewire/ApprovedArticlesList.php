@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
-use App\Models\NewsPost;
 use App\Models\Category;
+use App\Models\NewsPost;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -13,14 +13,20 @@ class ApprovedArticlesList extends Component
     use WithPagination;
 
     public $selectedPost = null;
+
     public $showPreviewModal = false;
+
     public $showEditModal = false;
+
     public $showDeleteModal = false;
+
     public $postToEditId = null;
+
     public $postToDeleteId = null;
 
     // Search and filter
     public $search = '';
+
     public $categoryFilter = '';
 
     public function updatingSearch()
@@ -66,7 +72,7 @@ class ApprovedArticlesList extends Component
 
     public function proceedToEdit()
     {
-        if (!$this->postToEditId) {
+        if (! $this->postToEditId) {
             return;
         }
 
@@ -87,7 +93,7 @@ class ApprovedArticlesList extends Component
 
     public function deletePost()
     {
-        if (!$this->postToDeleteId) {
+        if (! $this->postToDeleteId) {
             return;
         }
 
@@ -97,6 +103,7 @@ class ApprovedArticlesList extends Component
         if ($post->author->isEditor()) {
             session()->flash('error', 'You cannot delete articles published by other editors.');
             $this->cancelDelete();
+
             return;
         }
 
@@ -118,18 +125,18 @@ class ApprovedArticlesList extends Component
             });
 
         // Apply search filter
-        if (!empty($this->search)) {
+        if (! empty($this->search)) {
             $query->where(function ($q) {
-                $q->where('title', 'like', '%' . $this->search . '%')
-                    ->orWhere('content', 'like', '%' . $this->search . '%')
+                $q->where('title', 'like', '%'.$this->search.'%')
+                    ->orWhere('content', 'like', '%'.$this->search.'%')
                     ->orWhereHas('author', function ($authorQuery) {
-                        $authorQuery->where('name', 'like', '%' . $this->search . '%');
+                        $authorQuery->where('name', 'like', '%'.$this->search.'%');
                     });
             });
         }
 
         // Apply category filter
-        if (!empty($this->categoryFilter)) {
+        if (! empty($this->categoryFilter)) {
             $query->where('category_id', $this->categoryFilter);
         }
 

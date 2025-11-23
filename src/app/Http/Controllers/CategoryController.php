@@ -17,9 +17,11 @@ class CategoryController extends Controller
     {
         try {
             $categories = Category::latest()->paginate(15);
+
             return view('admin.categories.index', compact('categories'));
         } catch (\Exception $e) {
-            \Log::error('Error loading categories: ' . $e->getMessage());
+            \Log::error('Error loading categories: '.$e->getMessage());
+
             return redirect()->route('dashboard')->with('error', 'Unable to load categories. Please try again.');
         }
     }
@@ -34,9 +36,11 @@ class CategoryController extends Controller
         try {
             Category::create($request->validated());
             Cache::forget('categories.all');
+
             return redirect()->route('admin.categories.index')->with('success', 'Category created successfully!');
         } catch (\Exception $e) {
-            \Log::error('Error creating category: ' . $e->getMessage());
+            \Log::error('Error creating category: '.$e->getMessage());
+
             return back()->withInput()->with('error', 'Failed to create category. Please try again.');
         }
     }
@@ -56,9 +60,11 @@ class CategoryController extends Controller
         try {
             $category->update($request->validated());
             Cache::forget('categories.all');
+
             return redirect()->route('admin.categories.index')->with('success', 'Category updated successfully!');
         } catch (\Exception $e) {
-            \Log::error('Error updating category: ' . $e->getMessage());
+            \Log::error('Error updating category: '.$e->getMessage());
+
             return back()->withInput()->with('error', 'Failed to update category. Please try again.');
         }
     }
@@ -68,9 +74,11 @@ class CategoryController extends Controller
         try {
             $category->delete();
             Cache::forget('categories.all');
+
             return redirect()->route('admin.categories.index')->with('success', 'Category deleted successfully!');
         } catch (\Exception $e) {
-            \Log::error('Error deleting category: ' . $e->getMessage());
+            \Log::error('Error deleting category: '.$e->getMessage());
+
             return back()->with('error', 'Failed to delete category. It may be in use by existing posts.');
         }
     }

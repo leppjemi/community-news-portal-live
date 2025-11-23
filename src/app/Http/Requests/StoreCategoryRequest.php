@@ -30,7 +30,7 @@ class StoreCategoryRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
-                'unique:categories,name,' . $categoryId,
+                'unique:categories,name,'.$categoryId,
             ],
             'description' => 'nullable|string|max:1000',
         ];

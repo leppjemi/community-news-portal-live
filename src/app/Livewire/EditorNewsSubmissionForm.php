@@ -59,10 +59,12 @@ class EditorNewsSubmissionForm extends Component
                 $this->existing_image = $post->cover_image;
             } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
                 session()->flash('error', 'You do not have permission to edit this post.');
+
                 return redirect()->route($this->redirectRoute);
             } catch (\Exception $e) {
-                \Log::error('Error loading post for editing: ' . $e->getMessage());
+                \Log::error('Error loading post for editing: '.$e->getMessage());
                 session()->flash('error', 'Unable to load post. Please try again.');
+
                 return redirect()->route($this->redirectRoute);
             }
         }
@@ -80,7 +82,7 @@ class EditorNewsSubmissionForm extends Component
         }
 
         // Validate URL format
-        if (!filter_var($this->cover_image, FILTER_VALIDATE_URL)) {
+        if (! filter_var($this->cover_image, FILTER_VALIDATE_URL)) {
             $this->image_validation_message = 'Please enter a valid URL.';
 
             return;
@@ -99,7 +101,7 @@ class EditorNewsSubmissionForm extends Component
             $statusCode = is_array($headers[0]) ? $headers[0][0] : $headers[0];
 
             if (strpos($statusCode, '200') === false) {
-                $this->image_validation_message = 'Image not found at this URL (HTTP ' . $statusCode . ').';
+                $this->image_validation_message = 'Image not found at this URL (HTTP '.$statusCode.').';
 
                 return;
             }
@@ -111,8 +113,8 @@ class EditorNewsSubmissionForm extends Component
 
             $imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
 
-            if (!empty($contentType) && !in_array(strtolower($contentType), $imageTypes) && !str_contains(strtolower($contentType), 'image/')) {
-                $this->image_validation_message = 'This URL does not point to an image. Content type: ' . $contentType;
+            if (! empty($contentType) && ! in_array(strtolower($contentType), $imageTypes) && ! str_contains(strtolower($contentType), 'image/')) {
+                $this->image_validation_message = 'This URL does not point to an image. Content type: '.$contentType;
 
                 return;
             }
@@ -122,7 +124,7 @@ class EditorNewsSubmissionForm extends Component
             $this->image_validation_message = 'Image loaded successfully! ✓';
 
         } catch (\Exception $e) {
-            $this->image_validation_message = 'Error validating image: ' . $e->getMessage();
+            $this->image_validation_message = 'Error validating image: '.$e->getMessage();
         }
     }
 
@@ -132,9 +134,9 @@ class EditorNewsSubmissionForm extends Component
             // Custom validation for cover_image URL
             $rules = $this->rules;
 
-            if (!empty($this->cover_image)) {
+            if (! empty($this->cover_image)) {
                 // Validate URL format
-                if (!filter_var($this->cover_image, FILTER_VALIDATE_URL)) {
+                if (! filter_var($this->cover_image, FILTER_VALIDATE_URL)) {
                     $this->addError('cover_image', 'Please enter a valid URL.');
 
                     return;
@@ -152,7 +154,7 @@ class EditorNewsSubmissionForm extends Component
 
                 // If URL has image extension, allow it (for testing and basic validation)
                 // Otherwise, try to verify via headers
-                if (!$hasImageExtension) {
+                if (! $hasImageExtension) {
                     try {
                         $context = stream_context_create([
                             'http' => [
@@ -176,7 +178,7 @@ class EditorNewsSubmissionForm extends Component
                                 $imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
 
                                 // If content type is available and not an image, reject it
-                                if (!empty($contentType) && !in_array(strtolower($contentType), $imageTypes) && !str_contains(strtolower($contentType), 'image/')) {
+                                if (! empty($contentType) && ! in_array(strtolower($contentType), $imageTypes) && ! str_contains(strtolower($contentType), 'image/')) {
                                     $this->addError('cover_image', 'This URL does not point to a valid image file.');
 
                                     return;
@@ -212,7 +214,7 @@ class EditorNewsSubmissionForm extends Component
             $post->title = $this->title;
             $post->content = $this->content;
             $post->category_id = $this->category_id;
-            $post->cover_image = !empty($this->cover_image) ? $this->cover_image : null;
+            $post->cover_image = ! empty($this->cover_image) ? $this->cover_image : null;
 
             $post->save();
 
@@ -225,12 +227,13 @@ class EditorNewsSubmissionForm extends Component
             return redirect()->route($this->redirectRoute);
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
             session()->flash('error', 'You do not have permission to perform this action.');
+
             return redirect()->route($this->redirectRoute);
         } catch (\Illuminate\Validation\ValidationException $e) {
             // Re-throw validation exceptions to show form errors
             throw $e;
         } catch (\Exception $e) {
-            \Log::error('Error saving post: ' . $e->getMessage());
+            \Log::error('Error saving post: '.$e->getMessage());
             session()->flash('error', 'Failed to save post. Please try again.');
         }
     }

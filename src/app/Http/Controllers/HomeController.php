@@ -39,9 +39,10 @@ class HomeController extends Controller
 
             return view('home', compact('posts', 'categories'));
         } catch (\Exception $e) {
-            \Log::error('Error loading home page: ' . $e->getMessage());
+            \Log::error('Error loading home page: '.$e->getMessage());
             $posts = collect();
             $categories = collect();
+
             return view('home', compact('posts', 'categories'))->with('error', 'Unable to load news posts. Please try again later.');
         }
     }
@@ -60,7 +61,7 @@ class HomeController extends Controller
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             abort(404, 'News article not found.');
         } catch (\Exception $e) {
-            \Log::error('Error showing news post: ' . $e->getMessage());
+            \Log::error('Error showing news post: '.$e->getMessage());
             abort(500, 'Unable to load this news article.');
         }
     }

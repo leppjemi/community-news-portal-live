@@ -38,7 +38,8 @@ class DashboardController extends Controller
 
                 return view('admin.dashboard', compact('stats'));
             } catch (\Exception $e) {
-                \Log::error('Error loading admin dashboard: ' . $e->getMessage());
+                \Log::error('Error loading admin dashboard: '.$e->getMessage());
+
                 return view('admin.dashboard', ['stats' => []])->with('error', 'Unable to load dashboard statistics.');
             }
         }

@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
-use App\Models\NewsPost;
 use App\Models\Category;
+use App\Models\NewsPost;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
@@ -15,12 +15,17 @@ class ReviewQueue extends Component
     use WithPagination;
 
     public $selectedPost = null;
+
     public $showPreviewModal = false;
+
     public $categoryFilter = '';
 
     public $showApproveModal = false;
+
     public $showRejectModal = false;
+
     public $postToApproveId = null;
+
     public $postToRejectId = null;
 
     public function updatingCategoryFilter()
@@ -36,7 +41,7 @@ class ReviewQueue extends Component
                 ->selectRaw('category_id, count(*) as count')
                 ->groupBy('category_id')
                 ->with('category')
-                ->get()
+                ->get(),
         ];
     }
 
@@ -78,7 +83,7 @@ class ReviewQueue extends Component
 
     public function approve()
     {
-        if (!$this->postToApproveId) {
+        if (! $this->postToApproveId) {
             return;
         }
 
@@ -96,7 +101,7 @@ class ReviewQueue extends Component
             session()->flash('error', 'You do not have permission to approve this post.');
             $this->cancelApprove();
         } catch (\Exception $e) {
-            \Log::error('Error approving post: ' . $e->getMessage());
+            \Log::error('Error approving post: '.$e->getMessage());
             session()->flash('error', 'Failed to approve post. Please try again.');
             $this->cancelApprove();
         }
@@ -104,7 +109,7 @@ class ReviewQueue extends Component
 
     public function reject()
     {
-        if (!$this->postToRejectId) {
+        if (! $this->postToRejectId) {
             return;
         }
 
@@ -121,7 +126,7 @@ class ReviewQueue extends Component
             session()->flash('error', 'You do not have permission to reject this post.');
             $this->cancelReject();
         } catch (\Exception $e) {
-            \Log::error('Error rejecting post: ' . $e->getMessage());
+            \Log::error('Error rejecting post: '.$e->getMessage());
             session()->flash('error', 'Failed to reject post. Please try again.');
             $this->cancelReject();
         }
@@ -143,9 +148,10 @@ class ReviewQueue extends Component
 
             return view('livewire.review-queue', compact('posts', 'categories'));
         } catch (\Exception $e) {
-            \Log::error('Error loading review queue: ' . $e->getMessage());
+            \Log::error('Error loading review queue: '.$e->getMessage());
             $posts = collect();
             $categories = collect();
+
             return view('livewire.review-queue', compact('posts', 'categories'));
         }
     }

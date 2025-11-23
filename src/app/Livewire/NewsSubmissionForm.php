@@ -40,24 +40,18 @@ class NewsSubmissionForm extends Component
     public function mount($postId = null)
     {
         if ($postId) {
-            try {
-                $post = NewsPost::findOrFail($postId);
-                Gate::authorize('update', $post);
+            $post = NewsPost::findOrFail($postId);
 
-                $this->postId = $post->id;
-                $this->title = $post->title;
-                $this->content = $post->content;
-                $this->category_id = $post->category_id;
-                $this->cover_image = $post->cover_image ?? '';
-                $this->existing_image = $post->cover_image;
-            } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-                session()->flash('error', 'You do not have permission to edit this post.');
-                return redirect()->route('user.submissions');
-            } catch (\Exception $e) {
-                \Log::error('Error loading post for editing: ' . $e->getMessage());
-                session()->flash('error', 'Unable to load post. Please try again.');
-                return redirect()->route('user.submissions');
-            }
+            // This will throw AuthorizationException if unauthorized
+            // Livewire will convert it to a 403 response
+            Gate::authorize('update', $post);
+
+            $this->postId = $post->id;
+            $this->title = $post->title;
+            $this->content = $post->content;
+            $this->category_id = $post->category_id;
+            $this->cover_image = $post->cover_image ?? '';
+            $this->existing_image = $post->cover_image;
         }
     }
 
@@ -73,7 +67,7 @@ class NewsSubmissionForm extends Component
         }
 
         // Validate URL format
-        if (!filter_var($this->cover_image, FILTER_VALIDATE_URL)) {
+        if (! filter_var($this->cover_image, FILTER_VALIDATE_URL)) {
             $this->image_validation_message = 'Please enter a valid URL.';
 
             return;
@@ -92,7 +86,7 @@ class NewsSubmissionForm extends Component
             $statusCode = is_array($headers[0]) ? $headers[0][0] : $headers[0];
 
             if (strpos($statusCode, '200') === false) {
-                $this->image_validation_message = 'Image not found at this URL (HTTP ' . $statusCode . ').';
+                $this->image_validation_message = 'Image not found at this URL (HTTP '.$statusCode.').';
 
                 return;
             }
@@ -104,8 +98,8 @@ class NewsSubmissionForm extends Component
 
             $imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
 
-            if (!empty($contentType) && !in_array(strtolower($contentType), $imageTypes) && !str_contains(strtolower($contentType), 'image/')) {
-                $this->image_validation_message = 'This URL does not point to an image. Content type: ' . $contentType;
+            if (! empty($contentType) && ! in_array(strtolower($contentType), $imageTypes) && ! str_contains(strtolower($contentType), 'image/')) {
+                $this->image_validation_message = 'This URL does not point to an image. Content type: '.$contentType;
 
                 return;
             }
@@ -115,7 +109,7 @@ class NewsSubmissionForm extends Component
             $this->image_validation_message = 'Image loaded successfully! ✓';
 
         } catch (\Exception $e) {
-            $this->image_validation_message = 'Error validating image: ' . $e->getMessage();
+            $this->image_validation_message = 'Error validating image: '.$e->getMessage();
         }
     }
 
@@ -125,9 +119,9 @@ class NewsSubmissionForm extends Component
             // Custom validation for cover_image URL
             $rules = $this->rules;
 
-            if (!empty($this->cover_image)) {
+            if (! empty($this->cover_image)) {
                 // Validate URL format
-                if (!filter_var($this->cover_image, FILTER_VALIDATE_URL)) {
+                if (! filter_var($this->cover_image, FILTER_VALIDATE_URL)) {
                     $this->addError('cover_image', 'Please enter a valid URL.');
 
                     return;
@@ -145,7 +139,7 @@ class NewsSubmissionForm extends Component
 
                 // If URL has image extension, allow it (for testing and basic validation)
                 // Otherwise, try to verify via headers
-                if (!$hasImageExtension) {
+                if (! $hasImageExtension) {
                     try {
                         $context = stream_context_create([
                             'http' => [
@@ -169,7 +163,7 @@ class NewsSubmissionForm extends Component
                                 $imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
 
                                 // If content type is available and not an image, reject it
-                                if (!empty($contentType) && !in_array(strtolower($contentType), $imageTypes) && !str_contains(strtolower($contentType), 'image/')) {
+                                if (! empty($contentType) && ! in_array(strtolower($contentType), $imageTypes) && ! str_contains(strtolower($contentType), 'image/')) {
                                     $this->addError('cover_image', 'This URL does not point to a valid image file.');
 
                                     return;
@@ -215,10 +209,9 @@ class NewsSubmissionForm extends Component
             $post->title = $this->title;
             $post->content = $this->content;
             $post->category_id = $this->category_id;
-            $post->cover_image = !empty($this->cover_image) ? $this->cover_image : null;
+            $post->cover_image = ! empty($this->cover_image) ? $this->cover_image : null;
 
             $post->save();
-
 
             $successMessage = $this->postId
                 ? ($post->wasChanged('status') && $post->status === 'pending'
@@ -231,12 +224,13 @@ class NewsSubmissionForm extends Component
             return redirect()->route('user.submissions');
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
             session()->flash('error', 'You do not have permission to perform this action.');
+
             return redirect()->route('user.submissions');
         } catch (\Illuminate\Validation\ValidationException $e) {
             // Re-throw validation exceptions to show form errors
             throw $e;
         } catch (\Exception $e) {
-            \Log::error('Error saving post: ' . $e->getMessage());
+            \Log::error('Error saving post: '.$e->getMessage());
             session()->flash('error', 'Failed to save post. Please try again.');
         }
     }

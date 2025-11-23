@@ -19,6 +19,7 @@ class NewsLikesSeeder extends Seeder
 
         if ($users->isEmpty() || $posts->isEmpty()) {
             $this->command->warn('No users or posts found. Skipping likes seeding.');
+
             return;
         }
 

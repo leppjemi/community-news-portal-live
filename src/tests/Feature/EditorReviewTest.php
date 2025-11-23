@@ -39,7 +39,8 @@ class EditorReviewTest extends TestCase
 
         Livewire::actingAs($editor)
             ->test(\App\Livewire\ReviewQueue::class)
-            ->call('approve', $post->id);
+            ->call('confirmApprove', $post->id)
+            ->call('approve');
 
         $this->assertDatabaseHas('news_posts', [
             'id' => $post->id,

@@ -77,6 +77,7 @@ class EditorDashboardController extends Controller
     public function settings()
     {
         $user = Auth::user();
+
         return view('editor.settings', compact('user'));
     }
 
@@ -94,14 +95,14 @@ class EditorDashboardController extends Controller
                     ->letters()
                     ->mixedCase()
                     ->numbers()
-                    ->symbols()
+                    ->symbols(),
             ],
         ]);
 
         $user = Auth::user();
 
         // Verify current password
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             return back()->withErrors(['current_password' => 'Current password is incorrect']);
         }
 

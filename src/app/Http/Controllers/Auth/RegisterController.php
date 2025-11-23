@@ -34,10 +34,9 @@ class RegisterController extends Controller
                     ->letters()
                     ->mixedCase()
                     ->numbers()
-                    ->symbols()
+                    ->symbols(),
             ],
         ]);
-
 
         $user = User::create([
             'name' => $request->name,
@@ -65,8 +64,8 @@ class RegisterController extends Controller
         $exists = User::where('email', $request->email)->exists();
 
         return response()->json([
-            'available' => !$exists,
-            'message' => $exists ? 'Email is already taken' : 'Email is available'
+            'available' => ! $exists,
+            'message' => $exists ? 'Email is already taken' : 'Email is available',
         ], 200);
     }
 }

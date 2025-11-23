@@ -16,7 +16,7 @@ class PublicAccessTest extends TestCase
         $response = $this->get('/');
 
         $response->assertStatus(200);
-        $response->assertSee('Latest Community News');
+        $response->assertSee('Trending Stories');
     }
 
     public function test_guest_can_view_published_post(): void

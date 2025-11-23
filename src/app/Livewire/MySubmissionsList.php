@@ -5,7 +5,6 @@ namespace App\Livewire;
 use App\Models\NewsPost;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
-
 use Livewire\WithPagination;
 
 class MySubmissionsList extends Component
@@ -13,9 +12,13 @@ class MySubmissionsList extends Component
     use WithPagination;
 
     public $selectedPost = null;
+
     public $showPreviewModal = false;
+
     public $showDeleteModal = false;
+
     public $postToDeleteId = null;
+
     public $filter = 'all';
 
     public function updatingFilter()
@@ -54,19 +57,20 @@ class MySubmissionsList extends Component
 
     public function deletePost()
     {
-        if (!$this->postToDeleteId) {
+        if (! $this->postToDeleteId) {
             return;
         }
 
         $post = NewsPost::findOrFail($this->postToDeleteId);
 
-        if ($post->user_id !== Auth::id() && !Auth::user()->isEditor()) {
+        if ($post->user_id !== Auth::id() && ! Auth::user()->isEditor()) {
             abort(403);
         }
 
-        if (!in_array($post->status, ['pending', 'rejected'])) {
+        if (! in_array($post->status, ['pending', 'rejected'])) {
             session()->flash('error', 'You cannot delete a published or approved post.');
             $this->cancelDelete();
+
             return;
         }
 
@@ -74,8 +78,6 @@ class MySubmissionsList extends Component
         session()->flash('message', 'Post deleted successfully!');
         $this->cancelDelete();
     }
-
-
 
     public function render()
     {

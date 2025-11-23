@@ -71,6 +71,7 @@ class UserDashboardController extends Controller
     public function settings()
     {
         $user = Auth::user();
+
         return view('user.settings', compact('user'));
     }
 
@@ -88,14 +89,14 @@ class UserDashboardController extends Controller
                     ->letters()
                     ->mixedCase()
                     ->numbers()
-                    ->symbols()
+                    ->symbols(),
             ],
         ]);
 
         $user = Auth::user();
 
         // Verify current password
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             return back()->withErrors(['current_password' => 'Current password is incorrect']);
         }
 
@@ -135,7 +136,7 @@ class UserDashboardController extends Controller
         $post = NewsPost::where('id', $id)->where('user_id', $user->id)->firstOrFail();
 
         // Check if post is pending or rejected
-        if (!in_array($post->status, ['pending', 'rejected'])) {
+        if (! in_array($post->status, ['pending', 'rejected'])) {
             return redirect()->route('user.submissions')
                 ->with('error', 'You can only edit posts that are pending review or rejected.');
         }

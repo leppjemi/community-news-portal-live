@@ -5,7 +5,6 @@ namespace App\Livewire;
 use App\Models\NewsPost;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
-
 use Livewire\WithPagination;
 
 class EditorSubmissionsList extends Component
@@ -13,10 +12,15 @@ class EditorSubmissionsList extends Component
     use WithPagination;
 
     public $selectedPost = null;
+
     public $showPreviewModal = false;
+
     public $showDeleteModal = false;
+
     public $showEditModal = false;
+
     public $postToDeleteId = null;
+
     public $postToEditId = null;
 
     public function openPreview($postId)
@@ -45,7 +49,7 @@ class EditorSubmissionsList extends Component
 
     public function proceedToEdit()
     {
-        if (!$this->postToEditId) {
+        if (! $this->postToEditId) {
             return;
         }
 
@@ -66,7 +70,7 @@ class EditorSubmissionsList extends Component
 
     public function deletePost()
     {
-        if (!$this->postToDeleteId) {
+        if (! $this->postToDeleteId) {
             return;
         }
 
