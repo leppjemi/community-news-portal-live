@@ -20,6 +20,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Use custom pagination view with DaisyUI 5 styling
-        \Illuminate\Pagination\Paginator::defaultView('pagination.default');
+        \Illuminate\Pagination\Paginator::defaultView('components.pagination');
     }
 }

@@ -28,7 +28,7 @@ class NewsSubmissionTest extends TestCase
             ->set('category_id', $category->id)
             ->set('cover_image', $testImageUrl)
             ->call('save')
-            ->assertRedirect(route('my-submissions'));
+            ->assertRedirect(route('user.submissions'));
 
         $this->assertDatabaseHas('news_posts', [
             'title' => 'Test News Title',
@@ -51,7 +51,7 @@ class NewsSubmissionTest extends TestCase
             ->test(\App\Livewire\NewsSubmissionForm::class, ['postId' => $post->id])
             ->set('title', 'Updated Title')
             ->call('save')
-            ->assertRedirect(route('my-submissions'));
+            ->assertRedirect(route('user.submissions'));
 
         $this->assertDatabaseHas('news_posts', [
             'id' => $post->id,

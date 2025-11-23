@@ -15,9 +15,11 @@ class NewsPostSeeder extends Seeder
      */
     public function run(): void
     {
-        // Get first user and all categories
-        $user = User::first();
-        if (! $user) {
+        // Get users by role
+        $regularUsers = User::where('role', 'user')->get();
+        $editorUsers = User::where('role', 'editor')->get();
+
+        if ($regularUsers->isEmpty() && $editorUsers->isEmpty()) {
             $this->command->error('No users found. Please run UserSeeder first.');
 
             return;
@@ -35,48 +37,202 @@ class NewsPostSeeder extends Seeder
             'Health' => ['health', 'medical', 'hospital', 'disease', 'covid', 'vaccine', 'wellness'],
         ];
 
-        // Articles from The Star website
-        $articles = $this->getStarArticles();
+        // Articles from The Star website (Real Data)
+        $realArticles = $this->getStarArticles();
+        $targetCount = rand(200, 300);
 
         $created = 0;
-        foreach ($articles as $article) {
-            try {
-                // Determine category based on title and content
-                $category = $this->determineCategory($article['title'], $article['content'], $categories, $categoryMap);
 
-                // Generate unique slug
-                $baseSlug = Str::slug($article['title']);
-                $slug = $baseSlug;
-                $counter = 1;
-                while (NewsPost::where('slug', $slug)->exists()) {
-                    $slug = $baseSlug.'-'.$counter;
-                    $counter++;
+        // 1. Create Real Articles
+        foreach ($realArticles as $article) {
+            $this->createArticle($article, $categories, $categoryMap, $regularUsers, $editorUsers);
+            $created++;
+        }
+
+        // 2. Generate Realistic Filler Articles to reach target
+        $remaining = $targetCount - $created;
+
+        if ($remaining > 0) {
+            $this->command->info("Generating {$remaining} additional realistic articles...");
+
+            // Distribute remaining articles evenly across categories
+            $categoriesList = $categories->values();
+            $countPerCategory = ceil($remaining / $categoriesList->count());
+
+            foreach ($categoriesList as $category) {
+                for ($i = 0; $i < $countPerCategory; $i++) {
+                    if ($created >= $targetCount)
+                        break;
+
+                    $article = $this->generateRealisticArticle($category->name);
+
+                    // Force the category to be the one we selected
+                    $article['category_id'] = $category->id;
+
+                    $this->createArticle($article, $categories, $categoryMap, $regularUsers, $editorUsers, true);
+                    $created++;
                 }
-
-                // Get image URL based on article content
-                $coverImage = $article['cover_image'] ?? $this->getImageUrl($article['title'], $article['content']);
-
-                NewsPost::create([
-                    'user_id' => $user->id,
-                    'category_id' => $category->id,
-                    'title' => $article['title'],
-                    'slug' => $slug,
-                    'content' => $article['content'],
-                    'cover_image' => $coverImage,
-                    'status' => 'published',
-                    'views_count' => rand(0, 1000),
-                    'likes_count' => rand(0, 100),
-                    'published_at' => now()->subDays(rand(0, 30)),
-                ]);
-
-                $created++;
-                $this->command->info("Created article: {$article['title']}");
-            } catch (\Exception $e) {
-                $this->command->error("Failed to create article '{$article['title']}': ".$e->getMessage());
             }
         }
 
         $this->command->info("Successfully created {$created} news articles with published status.");
+    }
+
+    private function createArticle($article, $categories, $categoryMap, $regularUsers, $editorUsers, $forceCategory = false)
+    {
+        try {
+            // Determine category based on title and content, unless forced
+            if ($forceCategory && isset($article['category_id'])) {
+                $categoryId = $article['category_id'];
+            } else {
+                $category = $this->determineCategory($article['title'], $article['content'], $categories, $categoryMap);
+                $categoryId = $category->id;
+            }
+
+            // Generate unique slug
+            $baseSlug = Str::slug($article['title']);
+            $slug = $baseSlug;
+            $counter = 1;
+            while (NewsPost::where('slug', $slug)->exists()) {
+                $slug = $baseSlug . '-' . $counter;
+                $counter++;
+            }
+
+            // Get image URL based on article content
+            $coverImage = $article['cover_image'] ?? $this->getImageUrl($article['title'], $article['content']);
+
+            // Determine user (80% regular, 20% editor)
+            $isRegularUser = (rand(1, 100) <= 80);
+            if ($isRegularUser && $regularUsers->isNotEmpty()) {
+                $user = $regularUsers->random();
+            } elseif ($editorUsers->isNotEmpty()) {
+                $user = $editorUsers->random();
+            } else {
+                // Fallback if one group is empty
+                $user = $regularUsers->isNotEmpty() ? $regularUsers->random() : $editorUsers->random();
+            }
+
+            // Determine status
+            $status = ['published', 'rejected', 'pending'][rand(0, 2)];
+
+            NewsPost::create([
+                'user_id' => $user->id,
+                'category_id' => $categoryId,
+                'title' => $article['title'],
+                'slug' => $slug,
+                'content' => $article['content'],
+                'cover_image' => $coverImage,
+                'status' => $status,
+                'views_count' => rand(0, 1000),
+                'likes_count' => 0,
+                'published_at' => $status === 'published' ? now()->subDays(rand(0, 90)) : null,
+            ]);
+
+        } catch (\Exception $e) {
+            // $this->command->error("Failed to create article '{$article['title']}': " . $e->getMessage());
+        }
+    }
+
+    private function generateRealisticArticle(string $categoryName): array
+    {
+        $templates = [
+            'Technology' => [
+                "New {Tech} innovation promises to revolutionize {Industry}",
+                "{Company} announces breakthrough in {Tech} research",
+                "Cybersecurity alert: New {Crime} targeting {Industry}",
+                "Review: The latest {Tech} gadget everyone is talking about",
+                "How AI is reshaping the {Industry} landscape in Malaysia",
+            ],
+            'Politics' => [
+                "Govt announces new {Policy} for {Sector} sector",
+                "Parliament debates {Issue} affecting {State} residents",
+                "Minister visits {City} to oversee {Project} progress",
+                "Election Commission prepares for upcoming {State} polls",
+                "Bilateral talks between Malaysia and {Country} conclude successfully",
+            ],
+            'Sports' => [
+                "Badminton: {Player} advances to finals in {Tournament}",
+                "{Team} wins crucial match against {Opponent} in {League}",
+                "Malaysia to host international {Sport} championship next year",
+                "Local athlete breaks national record in {Sport}",
+                "Football: {Team} signs new striker for upcoming season",
+            ],
+            'Entertainment' => [
+                "{Celebrity} spotted in {City} filming new movie",
+                "Local film wins award at international film festival",
+                "Concert review: {Artist} mesmerizes crowd in Kuala Lumpur",
+                "Exclusive interview with rising star {Celebrity}",
+                "New reality show set to premiere on local TV",
+            ],
+            'Business' => [
+                "{Company} reports record profits for Q3, shares surge",
+                "Oil prices rise amid global {Event} concerns",
+                "{Bank} launches new digital banking app for SMEs",
+                "Ringgit strengthens against US dollar amid economic optimism",
+                "New investment incentives for {Sector} announced",
+            ],
+            'Health' => [
+                "Health Ministry launches campaign against {Disease}",
+                "New study reveals benefits of {Food} for heart health",
+                "Hospitals in {State} on high alert for {Disease} outbreak",
+                "Tips for maintaining mental wellness during busy times",
+                "Vaccination drive for {Disease} begins in {City}",
+            ],
+        ];
+
+        $placeholders = [
+            '{City}' => ['Kuala Lumpur', 'Penang', 'Johor Bahru', 'Ipoh', 'Kota Kinabalu', 'Kuching', 'Shah Alam', 'Petaling Jaya'],
+            '{State}' => ['Selangor', 'Johor', 'Penang', 'Kedah', 'Kelantan', 'Sabah', 'Sarawak', 'Perak'],
+            '{Country}' => ['Singapore', 'Indonesia', 'Thailand', 'China', 'Japan', 'UK', 'USA'],
+            '{Company}' => ['Maybank', 'CIMB', 'Petronas', 'Tenaga Nasional', 'Telekom Malaysia', 'AirAsia', 'Grab', 'Maxis'],
+            '{Player}' => ['Lee Zii Jia', 'Aaron Chia', 'Soh Wooi Yik', 'Pearly Tan', 'Thinaah Muralitharan'],
+            '{Tournament}' => ['All England', 'Malaysia Open', 'World Championships', 'Thomas Cup', 'Sudirman Cup'],
+            '{Policy}' => ['tax relief', 'subsidy', 'grant', 'regulation', 'incentive'],
+            '{Sector}' => ['technology', 'tourism', 'agriculture', 'manufacturing', 'retail'],
+            '{Crime}' => ['illegal gambling', 'drug trafficking', 'cybercrime', 'scams', 'illegal racing'],
+            '{Tech}' => ['AI', '5G', 'EV', 'Blockchain', 'Cloud'],
+            '{Industry}' => ['banking', 'healthcare', 'logistics', 'education', 'automotive'],
+            '{Issue}' => ['potholes', 'uncollected trash', 'stray animals', 'noise pollution', 'traffic congestion'],
+            '{Team}' => ['JDT', 'Selangor FC', 'Kedah Darul Aman', 'Terengganu FC', 'Sabah FC'],
+            '{Opponent}' => ['Perak FC', 'KL City', 'Negeri Sembilan', 'Sri Pahang', 'Kelantan United'],
+            '{League}' => ['Super League', 'FA Cup', 'Malaysia Cup'],
+            '{Disease}' => ['dengue', 'diabetes', 'obesity', 'influenza', 'hand-foot-mouth disease'],
+            '{Highway}' => ['PLUS', 'LDP', 'KESAS', 'Federal Highway', 'NKVE'],
+            '{Cause}' => ['accident', 'roadworks', 'flooding', 'broken down lorry', 'fallen tree'],
+            '{Celebrity}' => ['Michelle Yeoh', 'Henry Golding', 'Yuna', 'Siti Nurhaliza', 'Namewee'],
+            '{Artist}' => ['Siti Nurhaliza', 'Yuna', 'Faizal Tahir', 'Zee Avi'],
+            '{Event}' => ['supply chain', 'geopolitical', 'economic', 'pandemic', 'climate'],
+            '{Subject}' => ['History', 'Mathematics', 'Science', 'English', 'Bahasa Melayu'],
+            '{Bank}' => ['Public Bank', 'RHB', 'Hong Leong', 'AmBank', 'Alliance Bank'],
+            '{Project}' => ['MRT3', 'ECRL', 'Pan Borneo Highway', 'RTS Link'],
+            '{Sport}' => ['badminton', 'football', 'hockey', 'squash', 'diving'],
+            '{Food}' => ['matcha', 'dark chocolate', 'oats', 'berries', 'nuts'],
+        ];
+
+        // Get templates for the specific category, or fallback to a random one if category not found
+        $categoryTemplates = $templates[$categoryName] ?? $templates[array_rand($templates)];
+        $template = $categoryTemplates[array_rand($categoryTemplates)];
+
+        $title = $template;
+
+        foreach ($placeholders as $key => $values) {
+            if (str_contains($title, $key)) {
+                $title = str_replace($key, $values[array_rand($values)], $title);
+            }
+        }
+
+        // Generate some realistic content
+        $content = "LOREM IPSUM GENERATOR WOULD BE HERE BUT WE WANT REALISTIC TEXT. \n\n";
+        $content .= "In a recent development regarding " . $categoryName . ", " . lcfirst($title) . ". This has caused significant reaction from the public and officials alike. ";
+        $content .= "According to sources, the situation is being monitored closely. Authorities have urged everyone to remain calm and follow official guidelines. ";
+        $content .= "\n\nExperts believe this could have long-term implications for the " . (str_contains($title, 'Economy') ? 'economy' : 'community') . ". ";
+        $content .= "More updates will follow as the story develops.";
+
+        return [
+            'title' => $title,
+            'content' => $content,
+            'cover_image' => null // Will be generated by getImageUrl
+        ];
     }
 
     /**
@@ -84,20 +240,27 @@ class NewsPostSeeder extends Seeder
      */
     private function determineCategory(string $title, string $content, $categories, array $categoryMap): Category
     {
-        $text = strtolower($title.' '.$content);
+        $text = strtolower($title . ' ' . $content);
+        $matchedCategories = [];
 
         foreach ($categoryMap as $categoryName => $keywords) {
             foreach ($keywords as $keyword) {
                 if (str_contains($text, $keyword)) {
                     if ($categories->has($categoryName)) {
-                        return $categories[$categoryName];
+                        $matchedCategories[] = $categories[$categoryName];
+                        break; // Found a match for this category, move to next category
                     }
                 }
             }
         }
 
-        // Default to first category if no match
-        return $categories->first();
+        if (!empty($matchedCategories)) {
+            // Return a random category from the matches to avoid bias towards the first checked category
+            return $matchedCategories[array_rand($matchedCategories)];
+        }
+
+        // Default to random category if no match to ensure better distribution
+        return $categories->random();
     }
 
     /**
@@ -106,7 +269,7 @@ class NewsPostSeeder extends Seeder
      */
     private function getImageUrl(string $title, string $content): string
     {
-        $text = strtolower($title.' '.$content);
+        $text = strtolower($title . ' ' . $content);
 
         // Map keywords to search terms for Unsplash
         $keywordMap = [
@@ -390,6 +553,46 @@ class NewsPostSeeder extends Seeder
             [
                 'title' => 'US launches new bid to keep migrants detained by denying hearings, memo shows',
                 'content' => 'The US government has initiated a new effort to detain migrants by denying them hearings, according to a memo. The policy change has raised concerns about due process and migrant rights.',
+            ],
+            [
+                'title' => 'Floods: Evacuations ordered in Kedah and Kelantan as water levels rise',
+                'content' => 'Heavy rainfall has triggered floods in several districts of Kedah and Kelantan, forcing thousands to evacuate to relief centers. The National Disaster Management Agency (NADMA) is coordinating rescue efforts.',
+            ],
+            [
+                'title' => 'Social media ban for under-16s to start next year, says Fahmi',
+                'content' => 'Communications Minister Fahmi Fadzil announced that a ban on social media accounts for children under 16 will be implemented starting next year to protect minors from online harms.',
+            ],
+            [
+                'title' => 'Badminton: Chen Tang Jie-Toh Ee Wei win Australian Open title',
+                'content' => 'National mixed doubles pair Chen Tang Jie and Toh Ee Wei clinched the Australian Open Super 500 title, defeating their opponents in a thrilling final. This victory boosts their world ranking ahead of the Olympics.',
+            ],
+            [
+                'title' => 'Economy to grow 4-5% in 2024, says Ministry of Finance',
+                'content' => 'Malaysia\'s economy is projected to grow between 4% and 5% in 2024, driven by strong domestic demand and a recovery in the electrical and electronics sector, according to the Ministry of Finance\'s latest economic outlook.',
+            ],
+            [
+                'title' => 'HSBC opens new Wealth Centre in Johor Bahru to tap into affluent market',
+                'content' => 'HSBC Malaysia has opened a new Wealth Centre in Johor Bahru, aiming to serve the growing affluent segment in the southern region. The center offers bespoke wealth management services and international banking solutions.',
+            ],
+            [
+                'title' => 'GrabRewards rebranded to GrabCoins with new features',
+                'content' => 'Superapp Grab has rebranded its loyalty program GrabRewards to GrabCoins, introducing new ways for users to earn and redeem points across its ecosystem of services.',
+            ],
+            [
+                'title' => 'F1: McLaren\'s Norris and Piastri disqualified from Las Vegas GP',
+                'content' => 'In a shocking turn of events, McLaren drivers Lando Norris and Oscar Piastri were disqualified from the Las Vegas Grand Prix due to technical infringements found on their cars after the race.',
+            ],
+            [
+                'title' => 'Concert revenue hits record high in Malaysia for 2024',
+                'content' => 'The live entertainment industry in Malaysia saw record-breaking revenue in 2024, with a surge in international acts performing in Kuala Lumpur. Industry experts predict continued growth in the coming years.',
+            ],
+            [
+                'title' => 'Police arrest driver involved in viral road rage incident',
+                'content' => 'Police have arrested a driver involved in a road rage incident that went viral on social media. The suspect is being investigated for reckless driving and criminal intimidation.',
+            ],
+            [
+                'title' => 'Malaysia and Brazil strengthen trade ties with new agreements',
+                'content' => 'Malaysia and Brazil have signed several new trade agreements aimed at boosting bilateral trade and investment. The deals cover sectors such as agriculture, renewable energy, and technology.',
             ],
         ];
 

@@ -23,7 +23,8 @@ class NewsPostPolicy
         // Users can view their own posts, editors/admins can view all, guests can view published
         return $newsPost->isPublished()
             || $user->id === $newsPost->user_id
-            || $user->isEditor();
+            || $user->isEditor()
+            || $user->isAdmin();
     }
 
     /**
@@ -40,7 +41,7 @@ class NewsPostPolicy
     public function update(User $user, NewsPost $newsPost): bool
     {
         // Users can only edit their own posts, editors/admins can edit all
-        return $user->id === $newsPost->user_id || $user->isEditor();
+        return $user->id === $newsPost->user_id || $user->isEditor() || $user->isAdmin();
     }
 
     /**
@@ -49,7 +50,7 @@ class NewsPostPolicy
     public function delete(User $user, NewsPost $newsPost): bool
     {
         // Users can only delete their own posts, editors/admins can delete all
-        return $user->id === $newsPost->user_id || $user->isEditor();
+        return $user->id === $newsPost->user_id || $user->isEditor() || $user->isAdmin();
     }
 
     /**
@@ -57,7 +58,7 @@ class NewsPostPolicy
      */
     public function approve(User $user, NewsPost $newsPost): bool
     {
-        return $user->isEditor();
+        return $user->isEditor() || $user->isAdmin();
     }
 
     /**
@@ -65,7 +66,7 @@ class NewsPostPolicy
      */
     public function reject(User $user, NewsPost $newsPost): bool
     {
-        return $user->isEditor();
+        return $user->isEditor() || $user->isAdmin();
     }
 
     /**

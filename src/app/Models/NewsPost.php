@@ -58,6 +58,14 @@ class NewsPost extends Model
     }
 
     /**
+     * Get the author of the news post (alias for user).
+     */
+    public function author(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
      * Get the category that the news post belongs to.
      */
     public function category(): BelongsTo

@@ -27,8 +27,17 @@ class RegisterController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => [
+                'required',
+                'confirmed',
+                Rules\Password::min(8)
+                    ->letters()
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols()
+            ],
         ]);
+
 
         $user = User::create([
             'name' => $request->name,
@@ -42,5 +51,22 @@ class RegisterController extends Controller
         auth()->login($user);
 
         return redirect()->route('dashboard');
+    }
+
+    /**
+     * Check if email is already taken (API endpoint).
+     */
+    public function checkEmail(Request $request)
+    {
+        $request->validate([
+            'email' => ['required', 'email'],
+        ]);
+
+        $exists = User::where('email', $request->email)->exists();
+
+        return response()->json([
+            'available' => !$exists,
+            'message' => $exists ? 'Email is already taken' : 'Email is available'
+        ], 200);
     }
 }

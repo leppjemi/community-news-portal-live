@@ -13,93 +13,166 @@
 @endpush
 
 @section('content')
-<article class="max-w-4xl mx-auto">
-    <!-- Cover Image -->
-    @if($post->cover_image)
-        <div class="card bg-base-100 shadow-xl mb-6 overflow-hidden">
-            <figure class="relative">
-                <img 
-                    src="{{ $post->cover_image_url }}" 
-                    alt="{{ $post->title }}" 
-                    class="w-full h-64 lg:h-96 object-cover"
-                    onerror="this.src='https://via.placeholder.com/800x400?text=Image+Not+Found'">
-                <div class="absolute top-4 left-4">
-                    <div class="badge badge-primary badge-lg shadow-lg">{{ $post->category->name }}</div>
-                </div>
-            </figure>
-        </div>
-    @else
-        <div class="card bg-gradient-to-br from-primary/10 to-secondary/10 shadow-xl mb-6">
-            <div class="card-body py-8">
-                <div class="badge badge-primary badge-lg mb-4">{{ $post->category->name }}</div>
-            </div>
-        </div>
-    @endif
+<div x-data="{ 
+    scrollProgress: 0, 
+    readingTime: 0,
+    calculateReadingTime() {
+        const text = document.getElementById('article-content').innerText;
+        const wpm = 225;
+        const words = text.trim().split(/\s+/).length;
+        this.readingTime = Math.ceil(words / wpm);
+    },
+    updateScrollProgress() {
+        const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+        const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        this.scrollProgress = (winScroll / height) * 100;
+    }
+}" 
+x-init="calculateReadingTime(); window.addEventListener('scroll', () => updateScrollProgress())"
+class="relative min-h-screen">
 
-    <!-- Article Header -->
-    <div class="card bg-base-100 shadow-xl mb-6">
-        <div class="card-body">
-            <div class="flex flex-wrap items-center gap-4 mb-4">
-                <div>
-                    <div class="font-semibold">{{ $post->user->name }}</div>
-                    <div class="text-sm text-base-content/60 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <span>{{ $post->published_at?->format('F d, Y') }}</span>
-                    </div>
-                </div>
-            </div>
-            
-            <h1 class="text-3xl lg:text-4xl font-bold mb-6 leading-tight">{{ $post->title }}</h1>
+    <!-- Reading Progress Bar -->
+    <div class="fixed top-0 left-0 h-1 bg-primary z-[60] transition-all duration-300 ease-out"
+         :style="`width: ${scrollProgress}%`"></div>
 
-            <!-- Stats and Actions -->
-            <div class="flex flex-wrap items-center gap-4 pt-4 border-t border-base-300">
-                <div class="stat bg-base-200 rounded-lg px-4 py-2">
-                    <div class="stat-figure text-primary">
+    <!-- Hero Section with Parallax -->
+    <div class="relative h-[70vh] w-full overflow-hidden flex items-end">
+        <div class="absolute inset-0 z-0">
+            @if($post->cover_image)
+                <img src="{{ $post->cover_image_url }}" 
+                     alt="{{ $post->title }}" 
+                     class="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                     style="transform: scale(1.1);"
+                     x-bind:style="`transform: scale(${1 + (scrollProgress/500)}) translateY(${scrollProgress * 0.5}px)`"
+                     onerror="this.src='https://via.placeholder.com/1920x1080?text=News+Portal'">
+            @else
+                <div class="w-full h-full bg-gradient-to-br from-primary/80 to-secondary/80"></div>
+            @endif
+            <div class="absolute inset-0 bg-gradient-to-t from-base-100 via-base-100/50 to-transparent"></div>
+        </div>
+
+        <div class="container mx-auto px-4 relative z-10 pb-12 lg:pb-20">
+            <div class="max-w-4xl mx-auto" 
+                 x-data 
+                 x-intersect="$el.classList.add('opacity-100', 'translate-y-0')"
+                 class="opacity-0 translate-y-10 transition-all duration-1000 ease-out">
+                
+                <div class="flex flex-wrap items-center gap-3 mb-6">
+                    <span class="badge badge-primary badge-lg font-bold uppercase tracking-wider">{{ $post->category->name }}</span>
+                    <span class="text-base-content/80 font-medium flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
+                        <span x-text="readingTime + ' min read'"></span>
+                    </span>
+                </div>
+
+                <h1 class="text-4xl lg:text-6xl font-black leading-tight mb-6 drop-shadow-sm">
+                    {{ $post->title }}
+                </h1>
+
+                <div class="flex items-center gap-4">
+                    <div class="avatar placeholder">
+                        <div class="bg-neutral text-neutral-content rounded-full w-12">
+                            <span class="text-xl">{{ substr($post->user->name, 0, 1) }}</span>
+                        </div>
                     </div>
-                    <div class="stat-title text-xs">Views</div>
-                    <div class="stat-value text-lg">{{ number_format($post->views_count) }}</div>
-                </div>
-                <div>
-                    @livewire('news-like-button', ['post' => $post])
+                    <div>
+                        <div class="font-bold text-lg">{{ $post->user->name }}</div>
+                        <div class="text-sm text-base-content/70">{{ $post->published_at?->format('F d, Y') }}</div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Article Content -->
-    <div class="card bg-base-100 shadow-xl mb-6">
-        <div class="card-body prose prose-lg max-w-none">
-            <div class="whitespace-pre-wrap text-base leading-relaxed">
-                {!! nl2br(e($post->content)) !!}
+    <!-- Main Content Area -->
+    <div class="container mx-auto px-4 py-12 lg:py-20">
+        <div class="flex flex-col lg:flex-row gap-12 max-w-7xl mx-auto">
+            
+            <!-- Sidebar (Share & Actions) -->
+            <div class="lg:w-24 flex-shrink-0">
+                <div class="sticky top-24 flex lg:flex-col gap-4 items-center justify-center lg:justify-start p-4 bg-base-200/50 backdrop-blur-sm rounded-2xl border border-base-300/50">
+                    <div class="tooltip tooltip-right" data-tip="Like this article">
+                        @livewire('news-like-button', ['post' => $post])
+                    </div>
+                    
+                    <div class="w-full h-px bg-base-300 hidden lg:block"></div>
+                    
+                    <div class="flex lg:flex-col gap-2">
+                        @livewire('social-share-buttons', [
+                            'pageUrl' => request()->fullUrl(),
+                            'pageTitle' => $post->title,
+                            'pageType' => 'news',
+                            'newsPostId' => $post->id
+                        ])
+                    </div>
+                </div>
+            </div>
+
+            <!-- Article Body -->
+            <article class="flex-1 min-w-0">
+                <div id="article-content" 
+                     class="prose prose-lg lg:prose-xl max-w-none 
+                            prose-headings:font-bold prose-headings:tracking-tight 
+                            prose-p:leading-relaxed prose-p:text-base-content/90
+                            prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+                            prose-img:rounded-2xl prose-img:shadow-xl
+                            prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-base-200/50 prose-blockquote:p-6 prose-blockquote:rounded-r-lg prose-blockquote:italic">
+                    
+                    <div class="first-letter:text-7xl first-letter:font-bold first-letter:text-primary first-letter:mr-3 first-letter:float-left">
+                        {!! nl2br(e($post->content)) !!}
+                    </div>
+
+                </div>
+
+                <!-- Tags / Footer Meta -->
+                <div class="mt-16 pt-8 border-t border-base-300">
+                    <div class="flex flex-wrap gap-2">
+                        <span class="text-base-content/60 font-medium mr-2">Tags:</span>
+                        <a href="#" class="badge badge-outline hover:badge-primary transition-colors">#{{ Str::slug($post->category->name) }}</a>
+                        <a href="#" class="badge badge-outline hover:badge-primary transition-colors">#News</a>
+                        <a href="#" class="badge badge-outline hover:badge-primary transition-colors">#Community</a>
+                    </div>
+                </div>
+
+                <!-- Author Bio Box -->
+                <div class="mt-12 p-8 bg-base-200 rounded-2xl flex flex-col sm:flex-row gap-6 items-center sm:items-start text-center sm:text-left">
+                    <div class="avatar placeholder">
+                        <div class="bg-neutral text-neutral-content rounded-full w-20">
+                            <span class="text-3xl">{{ substr($post->user->name, 0, 1) }}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-xl mb-2">About {{ $post->user->name }}</h3>
+                        <p class="text-base-content/80">
+                            Contributing author at Community News Portal. Passionate about bringing local stories to life.
+                        </p>
+                    </div>
+                </div>
+
+            </article>
+
+        </div>
+    </div>
+
+    <!-- Related Articles (Placeholder for future implementation) -->
+    <div class="bg-base-200 py-16">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold mb-8 text-center">More from {{ $post->category->name }}</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <!-- We can add a related posts loop here later -->
             </div>
         </div>
     </div>
 
-    <!-- Share Section -->
-    <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
-            <h3 class="card-title mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                </svg>
-                Share this article
-            </h3>
-            <div class="flex flex-wrap gap-2">
-                @livewire('social-share-buttons', [
-                    'pageUrl' => request()->fullUrl(),
-                    'pageTitle' => $post->title,
-                    'pageType' => 'news',
-                    'newsPostId' => $post->id
-                ])
-            </div>
-        </div>
-    </div>
-</article>
+</div>
+
+<style>
+    /* Custom scrollbar for article content if needed */
+    html {
+        scroll-behavior: smooth;
+    }
+</style>
 @endsection
 

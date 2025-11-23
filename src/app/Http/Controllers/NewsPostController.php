@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\NewsPost;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class NewsPostController extends Controller
 {
@@ -36,6 +38,25 @@ class NewsPostController extends Controller
     public function show(string $id)
     {
         //
+    }
+
+    /**
+     * Preview a post (for editors/admins to view pending posts).
+     */
+    public function preview($id)
+    {
+        try {
+            $post = NewsPost::with(['user', 'category'])->findOrFail($id);
+
+            // Only editors and admins can preview posts
+            Gate::authorize('approve', $post);
+
+            return view('news.show', compact('post'));
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            abort(403, 'You do not have permission to preview this post.');
+        } catch (\Exception $e) {
+            abort(404, 'Post not found.');
+        }
     }
 
     /**

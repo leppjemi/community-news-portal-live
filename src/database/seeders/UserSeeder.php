@@ -23,24 +23,28 @@ class UserSeeder extends Seeder
             ]
         );
 
-        // Create editor user
-        User::updateOrCreate(
-            ['email' => 'editor@example.com'],
-            [
-                'name' => 'Editor User',
-                'password' => Hash::make('password'),
-                'role' => 'editor',
-            ]
-        );
+        // Create editor users
+        for ($i = 1; $i <= 3; $i++) {
+            User::updateOrCreate(
+                ['email' => "editor{$i}@example.com"],
+                [
+                    'name' => "Editor User {$i}",
+                    'password' => Hash::make('password'),
+                    'role' => 'editor',
+                ]
+            );
+        }
 
-        // Create regular user
-        User::updateOrCreate(
-            ['email' => 'user@example.com'],
-            [
-                'name' => 'Regular User',
-                'password' => Hash::make('password'),
-                'role' => 'user',
-            ]
-        );
+        // Create regular users
+        for ($i = 1; $i <= 5; $i++) {
+            User::updateOrCreate(
+                ['email' => "user{$i}@example.com"],
+                [
+                    'name' => "Regular User {$i}",
+                    'password' => Hash::make('password'),
+                    'role' => 'user',
+                ]
+            );
+        }
     }
 }

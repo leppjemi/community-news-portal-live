@@ -6,7 +6,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
         </div>
-        <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-1 w-64 p-2 shadow-xl border border-base-300 mt-2">
+        <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-50 w-64 p-2 shadow-xl border border-base-300 mt-2">
             @auth
                 <li class="menu-title">
                     <span>Navigation</span>
@@ -29,7 +29,7 @@
                 </li>
                 @if(auth()->user()->hasRole('user') || auth()->user()->isEditor())
                     <li>
-                        <a href="{{ route('my-submissions') }}" class="gap-2">
+                        <a href="{{ route('user.submissions') }}" class="gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
@@ -37,7 +37,7 @@
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('submit-news') }}" class="gap-2">
+                        <a href="{{ route('user.submit-news') }}" class="gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                             </svg>

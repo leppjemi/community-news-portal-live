@@ -103,8 +103,9 @@
     </div>
 </div>
 
+<!-- Pagination -->
 @if($users->hasPages())
-    <div class="mt-6">
+    <div class="mt-8">
         {{ $users->links() }}
     </div>
 @endif

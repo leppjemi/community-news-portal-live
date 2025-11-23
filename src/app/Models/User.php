@@ -84,6 +84,6 @@ class User extends Authenticatable
      */
     public function isEditor(): bool
     {
-        return $this->hasRole('editor') || $this->isAdmin();
+        return $this->hasRole('editor');
     }
 }

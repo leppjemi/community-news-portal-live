@@ -22,8 +22,16 @@ class StoreCategoryRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Get the category ID from the route parameter (for updates)
+        $categoryId = $this->route('category')?->id;
+
         return [
-            'name' => 'required|string|max:255|unique:categories,name',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:categories,name,' . $categoryId,
+            ],
             'description' => 'nullable|string|max:1000',
         ];
     }

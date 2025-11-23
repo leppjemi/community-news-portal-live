@@ -15,9 +15,13 @@ class CategoryController extends Controller
 
     public function index()
     {
-        $categories = Category::latest()->paginate(15);
-
-        return view('admin.categories.index', compact('categories'));
+        try {
+            $categories = Category::latest()->paginate(15);
+            return view('admin.categories.index', compact('categories'));
+        } catch (\Exception $e) {
+            \Log::error('Error loading categories: ' . $e->getMessage());
+            return redirect()->route('dashboard')->with('error', 'Unable to load categories. Please try again.');
+        }
     }
 
     public function create()
@@ -27,10 +31,14 @@ class CategoryController extends Controller
 
     public function store(StoreCategoryRequest $request)
     {
-        Category::create($request->validated());
-
-        // Cache is cleared automatically via model events
-        return redirect()->route('admin.categories.index')->with('success', 'Category created successfully!');
+        try {
+            Category::create($request->validated());
+            Cache::forget('categories.all');
+            return redirect()->route('admin.categories.index')->with('success', 'Category created successfully!');
+        } catch (\Exception $e) {
+            \Log::error('Error creating category: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Failed to create category. Please try again.');
+        }
     }
 
     public function show(Category $category)
@@ -45,15 +53,25 @@ class CategoryController extends Controller
 
     public function update(StoreCategoryRequest $request, Category $category)
     {
-        $category->update($request->validated());
-
-        return redirect()->route('admin.categories.index')->with('success', 'Category updated successfully!');
+        try {
+            $category->update($request->validated());
+            Cache::forget('categories.all');
+            return redirect()->route('admin.categories.index')->with('success', 'Category updated successfully!');
+        } catch (\Exception $e) {
+            \Log::error('Error updating category: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Failed to update category. Please try again.');
+        }
     }
 
     public function destroy(Category $category)
     {
-        $category->delete();
-
-        return redirect()->route('admin.categories.index')->with('success', 'Category deleted successfully!');
+        try {
+            $category->delete();
+            Cache::forget('categories.all');
+            return redirect()->route('admin.categories.index')->with('success', 'Category deleted successfully!');
+        } catch (\Exception $e) {
+            \Log::error('Error deleting category: ' . $e->getMessage());
+            return back()->with('error', 'Failed to delete category. It may be in use by existing posts.');
+        }
     }
 }
