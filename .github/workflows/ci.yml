@@ -70,6 +70,17 @@ jobs:
           DB_PASSWORD: user
         run: php artisan migrate --force
 
+      - name: Seed database
+        working-directory: src
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: community_db
+          DB_USERNAME: user
+          DB_PASSWORD: user
+        run: php artisan db:seed
+
       - name: Run tests
         working-directory: src
         env:
