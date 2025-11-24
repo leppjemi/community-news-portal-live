@@ -46,7 +46,7 @@ class UserDashboardController extends Controller
                 'recentSubmissions'
             ));
         } catch (\Exception $e) {
-            \Log::error('Error loading user dashboard: ' . $e->getMessage());
+            \Log::error('Error loading user dashboard: '.$e->getMessage());
 
             return back()->with('error', 'Failed to load dashboard. Please try again.');
         }
@@ -71,7 +71,7 @@ class UserDashboardController extends Controller
             return redirect()->route('user.settings')
                 ->with('success', 'Profile updated successfully!');
         } catch (\Exception $e) {
-            \Log::error('Error updating profile: ' . $e->getMessage());
+            \Log::error('Error updating profile: '.$e->getMessage());
 
             return back()->withInput()->with('error', 'Failed to update profile. Please try again.');
         }
@@ -109,7 +109,7 @@ class UserDashboardController extends Controller
             $user = Auth::user();
 
             // Verify current password
-            if (!Hash::check($request->current_password, $user->password)) {
+            if (! Hash::check($request->current_password, $user->password)) {
                 return back()->withErrors(['current_password' => 'Current password is incorrect']);
             }
 
@@ -121,7 +121,7 @@ class UserDashboardController extends Controller
             return redirect()->route('user.settings')
                 ->with('success', 'Password updated successfully!');
         } catch (\Exception $e) {
-            \Log::error('Error updating password: ' . $e->getMessage());
+            \Log::error('Error updating password: '.$e->getMessage());
 
             return back()->with('error', 'Failed to update password. Please try again.');
         }
@@ -154,7 +154,7 @@ class UserDashboardController extends Controller
         $post = NewsPost::where('id', $id)->where('user_id', $user->id)->firstOrFail();
 
         // Check if post is pending or rejected
-        if (!in_array($post->status, ['pending', 'rejected'])) {
+        if (! in_array($post->status, ['pending', 'rejected'])) {
             return redirect()->route('user.submissions')
                 ->with('error', 'You can only edit posts that are pending review or rejected.');
         }

@@ -39,7 +39,7 @@ class SocialShareController extends Controller
                 'data' => $click,
             ], 201);
         } catch (\Exception $e) {
-            \Log::error('Error tracking social share: ' . $e->getMessage());
+            \Log::error('Error tracking social share: '.$e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -124,7 +124,7 @@ class SocialShareController extends Controller
                 ->map(function ($item) {
                     // Generate dynamic URL based on content type
                     $url = $item->page_url; // Fallback
-    
+
                     if ($item->newsPost) {
                         $url = route('news.show', $item->newsPost->slug);
                     } elseif ($item->page_type === 'home') {
@@ -281,7 +281,7 @@ class SocialShareController extends Controller
                 'categoryId'
             ));
         } catch (\Exception $e) {
-            \Log::error('Error loading analytics: ' . $e->getMessage());
+            \Log::error('Error loading analytics: '.$e->getMessage());
 
             return back()->with('error', 'Failed to load analytics data. Please try again.');
         }

@@ -122,5 +122,5 @@ setup-all:
 	@echo ""
 	@echo "Default login credentials:"
 	@echo "  Admin:   admin@example.com / password"
-	@echo "  Editor:  editor@example.com / password"
-	@echo "  User:    user@example.com / password"
+	@echo "  Editors: editor1@example.com ... editor3@example.com / password"
+	@echo "  Users:   user1@example.com ... user5@example.com / password"

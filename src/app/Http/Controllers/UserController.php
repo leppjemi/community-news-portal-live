@@ -41,7 +41,7 @@ class UserController extends Controller
 
             return redirect()->route('admin.users.index')->with('success', 'User created successfully!');
         } catch (\Exception $e) {
-            \Log::error('Error creating user: ' . $e->getMessage());
+            \Log::error('Error creating user: '.$e->getMessage());
 
             return back()->withInput()->with('error', 'Failed to create user. Please try again.');
         }
@@ -67,7 +67,7 @@ class UserController extends Controller
                 'role' => 'required|in:user,editor,admin',
             ]);
 
-            if (!empty($validated['password'])) {
+            if (! empty($validated['password'])) {
                 $validated['password'] = Hash::make($validated['password']);
             } else {
                 unset($validated['password']);
@@ -77,7 +77,7 @@ class UserController extends Controller
 
             return redirect()->route('admin.users.index')->with('success', 'User updated successfully!');
         } catch (\Exception $e) {
-            \Log::error('Error updating user: ' . $e->getMessage());
+            \Log::error('Error updating user: '.$e->getMessage());
 
             return back()->withInput()->with('error', 'Failed to update user. Please try again.');
         }
@@ -90,7 +90,7 @@ class UserController extends Controller
 
             return redirect()->route('admin.users.index')->with('success', 'User deleted successfully!');
         } catch (\Exception $e) {
-            \Log::error('Error deleting user: ' . $e->getMessage());
+            \Log::error('Error deleting user: '.$e->getMessage());
 
             return back()->with('error', 'Failed to delete user. Please try again.');
         }
