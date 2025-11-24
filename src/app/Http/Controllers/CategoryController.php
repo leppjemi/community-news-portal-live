@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreCategoryRequest;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -20,6 +19,7 @@ class CategoryController extends Controller
     public function index()
     {
         $categories = Category::withCount('newsPosts')->latest()->paginate(15);
+
         return view('admin.categories.index', compact('categories'));
     }
 
@@ -70,7 +70,7 @@ class CategoryController extends Controller
     public function update(Request $request, Category $category)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name,' . $category->id,
+            'name' => 'required|string|max:255|unique:categories,name,'.$category->id,
             'description' => 'nullable|string',
         ]);
 
@@ -96,7 +96,7 @@ class CategoryController extends Controller
 
             return redirect()->route('admin.categories.index')->with('success', 'Category deleted successfully!');
         } catch (\Exception $e) {
-            \Log::error('Error deleting category: ' . $e->getMessage());
+            \Log::error('Error deleting category: '.$e->getMessage());
 
             return back()->with('error', 'Failed to delete category. It may be in use by existing posts.');
         }

@@ -45,7 +45,8 @@ class DashboardController extends Controller
 
                 return view('admin.dashboard', compact('stats', 'charts', 'range'));
             } catch (\Exception $e) {
-                \Log::error('Error loading admin dashboard: ' . $e->getMessage());
+                \Log::error('Error loading admin dashboard: '.$e->getMessage());
+
                 return view('admin.dashboard', ['stats' => [], 'charts' => [], 'range' => 'last_7_days'])->with('error', 'Unable to load dashboard statistics.');
             }
         }
@@ -80,7 +81,7 @@ class DashboardController extends Controller
     private function getChartData($model, $range, $dateColumn, $valueColumn = null, $aggregate = 'count')
     {
         $data = $model::whereBetween($dateColumn, $range)
-            ->selectRaw("DATE($dateColumn) as date, " . ($valueColumn ? "$aggregate($valueColumn)" : "COUNT(*)") . " as value")
+            ->selectRaw("DATE($dateColumn) as date, ".($valueColumn ? "$aggregate($valueColumn)" : 'COUNT(*)').' as value')
             ->groupBy('date')
             ->orderBy('date')
             ->get();

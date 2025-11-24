@@ -114,7 +114,7 @@ class SocialShareController extends Controller
             ->map(function ($item) {
                 // Generate dynamic URL based on content type
                 $url = $item->page_url; // Fallback
-    
+
                 if ($item->newsPost) {
                     $url = route('news.show', $item->newsPost->slug);
                 } elseif ($item->page_type === 'home') {
