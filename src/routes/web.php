@@ -93,6 +93,7 @@ Route::middleware(['auth', 'role:editor'])->prefix('editor')->name('editor.')->g
 
 // Admin routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::resource('categories', CategoryController::class);
     Route::resource('users', UserController::class);
     Route::get('/analytics', [SocialShareController::class, 'analytics'])->name('analytics');

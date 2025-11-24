@@ -105,15 +105,25 @@ class SocialShareController extends Controller
         $topPagesQuery = SocialShareClick::query();
         $baseQuery($topPagesQuery);
         $topPages = $topPagesQuery
-            ->select('page_url', 'news_post_id', DB::raw('count(*) as share_count'))
-            ->with(['newsPost:id,title,category_id', 'newsPost.category:id,name'])
-            ->groupBy('page_url', 'news_post_id')
+            ->select('page_url', 'page_type', 'news_post_id', DB::raw('count(*) as share_count'))
+            ->with(['newsPost:id,slug,title,category_id', 'newsPost.category:id,name'])
+            ->groupBy('page_url', 'page_type', 'news_post_id')
             ->orderByDesc('share_count')
             ->limit(20)
             ->get()
             ->map(function ($item) {
+                // Generate dynamic URL based on content type
+                $url = $item->page_url; // Fallback
+    
+                if ($item->newsPost) {
+                    $url = route('news.show', $item->newsPost->slug);
+                } elseif ($item->page_type === 'home') {
+                    $url = route('home');
+                }
+
                 return [
-                    'page_url' => $item->page_url,
+                    'page_url' => $url, // Use the dynamic URL
+                    'original_url' => $item->page_url, // Keep original for reference if needed
                     'share_count' => $item->share_count,
                     'title' => $item->newsPost ? $item->newsPost->title : 'Home Page',
                     'category' => $item->newsPost && $item->newsPost->category ? $item->newsPost->category->name : null,
